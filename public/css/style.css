@@ -1,0 +1,119 @@
+
+body {
+background: #f4f4f4;
+font-family: 'Poppins', sans-serif;
+}
+
+/* Department & Post Containers */
+.department-container, .post-container {
+border-radius: 8px;
+padding: 15px;
+display: flex;
+flex-wrap: wrap;
+gap: 15px;
+}
+.form {
+    margin-left: 50px; /* Adjust as needed */
+}
+.container {
+    padding-left: 30px; /* Adjust as per requirement */
+}
+
+
+/* Different Backgrounds */
+.department-container {
+background: #e3f2fd;  /* Light Blue */
+border: 2px solid #2196F3;  
+}
+
+.post-container {
+background: #f8f9fa;  /* Light Gray */
+border: 2px solid #176eba;
+}
+
+/* Labels Styling */
+.form-label {
+font-weight: 600;
+font-size: 16px;
+}
+
+/* Radio Button Styling */
+.form-check-label {
+background: white;
+padding: 12px 12px;
+border-radius: 6px;
+border: 1px solid #ddd;
+transition: 0.3s;
+}
+
+.form-check-label:hover {
+background: #ddd;
+cursor: pointer;
+}
+
+/* Hide Custom Post Field Initially */
+#otherPostField {
+display: none;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+.department-container, .post-container {
+    flex-direction: column;
+}
+}
+.note {
+        width: 1100px;
+        padding: 5px;
+        background-color: #fff8c4; /* Light Yellow */
+        border-left: 5px solid #ffcc00; /* Highlight Strip */
+        font-family: Arial, sans-serif;
+        font-size: 20px;
+        color: #333;
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+        margin: 30px auto;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+        padding: 20px;
+    }
+    .modal-header {
+        background: #007bff;
+        color: white;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+    .modal-body {
+        font-size: 18px;
+        line-height: 1.6;
+    }
+    .modal-body p {
+        margin-bottom: 10px;
+    }
+    .modal-title {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    
+    html, body {
+        height: 100%;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .container-fluid {
+        flex: 1;
+    }
+    
+    .footer {
+        width: 100%;
+        position: relative; /* अगर Content कम हो तो नीचे रहेगा */
+        bottom: 0;
+    }
+    .note {
+        margin-bottom: 1px; /* Gap कम करने के लिए */
+    }
+
+    
