@@ -16,7 +16,7 @@
 
         <!-- 1. Hero Banner -->
         <div class="group relative rounded-none sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 mb-8 cursor-pointer bg-white -mx-4 sm:mx-0" data-bs-toggle="modal" data-bs-target="#imageModal">
-            <img src="{{ asset('images/1.jpeg') }}" alt="Main Event Poster" class="w-full h-auto max-h-[500px] object-contain transform scale-110 sm:scale-100 transition-transform duration-500 group-hover:scale-[1.05]" data-img="{{ asset('images/1.jpeg') }}" loading="lazy">
+            <img src="{{ asset('images/1.jpeg') }}" alt="Main Event Poster" class="w-full h-auto max-h-[500px] object-contain transition-transform duration-500 group-hover:scale-[1.02]" data-img="{{ asset('images/1.jpeg') }}" loading="lazy">
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none"></div>
         </div>
 
@@ -200,13 +200,13 @@
         </div>
 
         <!-- Additional Banners -->
-        <div class="group relative rounded-none sm:rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 mb-6 cursor-pointer -mx-4 sm:mx-0" data-bs-toggle="modal" data-bs-target="#imageModal">
-            <img src="{{ asset('images/3.jpeg') }}" alt="Guidelines" class="w-full h-auto object-cover transform scale-110 sm:scale-100 transition-transform duration-500 group-hover:scale-[1.05]" data-img="{{ asset('images/3.jpeg') }}">
+        <div class="group relative rounded-none sm:rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 mb-6 cursor-pointer -mx-4 sm:mx-0 bg-white" data-bs-toggle="modal" data-bs-target="#imageModal">
+            <img src="{{ asset('images/3.jpeg') }}" alt="Guidelines" class="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]" data-img="{{ asset('images/3.jpeg') }}">
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none"></div>
         </div>
 
-        <div class="group relative rounded-none sm:rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer -mx-4 sm:mx-0" data-bs-toggle="modal" data-bs-target="#imageModal">
-            <img src="{{ asset('images/4.jpeg') }}" alt="Guidelines" class="w-full h-auto object-cover transform scale-110 sm:scale-100 transition-transform duration-500 group-hover:scale-[1.05]" data-img="{{ asset('images/4.jpeg') }}">
+        <div class="group relative rounded-none sm:rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer -mx-4 sm:mx-0 bg-white" data-bs-toggle="modal" data-bs-target="#imageModal">
+            <img src="{{ asset('images/4.jpeg') }}" alt="Guidelines" class="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]" data-img="{{ asset('images/4.jpeg') }}">
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none"></div>
         </div>
 
