@@ -1219,6 +1219,11 @@ checkoutInput.addEventListener("change", function () {
         let valid = true;
         
         for (let i = 0; i < inputs.length; i++) {
+            // Skip validation for elements whose parent containers are hidden
+            if ($(inputs[i]).parents(':hidden').length > 0) {
+                continue;
+            }
+            
             if (inputs[i].hasAttribute('required') && !inputs[i].value) {
                 inputs[i].reportValidity();
                 valid = false;
