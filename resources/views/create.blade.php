@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="container mt-5">
+<div class="container px-3 px-md-4 mt-5">
     <h3 class="text-center text-primary mb-4">
         📋 Group Bookings List
     </h3>

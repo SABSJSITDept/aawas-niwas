@@ -164,7 +164,7 @@
 <div class="mb-4"></div>
 
 <!-- Header Banner + Contact Info inside a Stylish Card -->
-     <section class="container my-4">
+     <section class="container px-3 px-md-4 my-4">
     <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden relative">
         <!-- Decorative top line -->
         <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
@@ -198,7 +198,7 @@
    </section>
 
 <!-- Main Content -->
-<div class="container px-1">
+<div class="container px-3 px-md-4 mb-5">
 
 
 <!-- Manual Entry Form -->
