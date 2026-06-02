@@ -14,10 +14,12 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 class RegistrationExport implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithColumnWidths
 {
     protected $data;
+    protected $headings;
 
-    public function __construct(array $data)
+    public function __construct(array $data, array $headings = [])
     {
         $this->data = $data;
+        $this->headings = $headings;
     }
 
     public function array(): array
@@ -27,46 +29,34 @@ class RegistrationExport implements FromArray, WithHeadings, WithStyles, ShouldA
 
     public function headings(): array
     {
-        return [
-            'Type',          
-            'Booking ID',
-            'Name',
-            'Father Name',
-            'Phone',
-            'Aadhar Number',
-            'Age',
-            'MID',            
-            'City',
-            'State',
-            'Aanchal',
-            'Travel Type',
-            'Check-in Date',
-            'Check-in Time',
-            'Check-out Date',
-            'Check-out Time',
-            'Total Persons'
-        ];
+        // If dynamic headings provided, use them; otherwise extract from first row keys
+        if (!empty($this->headings)) {
+            return $this->headings;
+        }
+
+        if (!empty($this->data)) {
+            $firstRow = reset($this->data);
+            if (is_array($firstRow)) {
+                return array_map('ucwords', array_map(function($key) {
+                    return str_replace('_', ' ', $key);
+                }, array_keys($firstRow)));
+            }
+        }
+
+        return [];
     }
 
     public function columnWidths(): array
     {
-        return [
-            'A' => 12,  // Type
-            'B' => 15,  // Booking ID
-            'C' => 20,  // Name
-            'D' => 20,  // Father Name
-            'E' => 15,  // Phone
-            'F' => 18,  // Aadhar Number
-            'G' => 10,  // Age
-            'H' => 12,  // MID
-            'I' => 15,  // City
-            'J' => 15,  // State
-            'K' => 15,  // Aanchal
-            'L' => 15,  // Travel Type
-            'M' => 15,  // Check-in Date
-            'N' => 15,  // Check-out Date
-            'O' => 15,  // Total Persons
-        ];
+        // We'll just provide a default width for all dynamically generated columns
+        $widths = [];
+        $headers = $this->headings();
+        $col = 'A';
+        foreach ($headers as $header) {
+            $widths[$col] = 18; // Default width
+            $col++;
+        }
+        return $widths;
     }
 
     public function styles(Worksheet $sheet)

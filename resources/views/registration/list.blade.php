@@ -3,6 +3,34 @@
 @section('title', 'Pending Registrations')
 
 @section('content')
+<style>
+    .table-responsive {
+        max-height: 65vh;
+        min-height: 400px;
+        overflow: auto;
+    }
+    .table-responsive thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #f8f9fa; /* standard table-light color */
+    }
+    .table-responsive th:last-child,
+    .table-responsive td:last-child {
+        position: sticky;
+        right: 0;
+        z-index: 11;
+        background: #fff;
+        box-shadow: -3px 0 5px rgba(0,0,0,0.05);
+    }
+    .table-responsive thead th:last-child {
+        z-index: 12;
+        background: #f8f9fa;
+    }
+    .table-hover tbody tr:hover td:last-child {
+        background: #f2f2f2;
+    }
+</style>
 <div class="container py-4">
     <div class="d-flex align-items-center justify-content-between mb-4 gap-3 flex-wrap">
         <div>
@@ -10,15 +38,23 @@
             <small class="text-muted">Showing all pending Family &amp; Group bookings</small>
         </div>
 
-        <!-- EXPORT BUTTONS -->
-        <div class="d-flex gap-2 align-items-center">
+        <!-- EXPORT BUTTONS & COLUMNS DROPDOWN -->
+        <div class="col-md-6 d-flex gap-2 justify-content-md-end">
+            <button class="btn btn-outline-danger shadow-sm btn-sm" id="btn-clear-filters">
+                <i class="bi bi-x-circle"></i> Clear Filters
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="columnsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-layout-three-columns me-1"></i> Columns
+                </button>
+                <ul class="dropdown-menu p-2 shadow-sm" aria-labelledby="columnsDropdown" id="column-toggles" style="max-height: 400px; overflow-y: auto;">
+                    <!-- dynamically populated -->
+                </ul>
+            </div>
             <div class="btn-group" role="group">
                 <button type="button" class="btn btn-success btn-sm" onclick="exportData('excel')" title="Export to Excel">
                     <i class="bi bi-file-earmark-excel me-1"></i>Excel
                 </button>
-                {{-- <button type="button" class="btn btn-danger btn-sm" onclick="exportData('pdf')" title="Export to PDF">
-                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
-                </button> --}}
             </div>
         </div>
 
@@ -48,17 +84,8 @@
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light small text-muted">
-                        <tr>
-                            <th style="width:48px;">#</th>
-                            <th style="width:160px;">Booking ID</th>
-                            <th>Name</th>
-                            <th style="width:130px;">Phone</th>
-                            <th style="width:110px;">Type</th>
-                            <th style="width:120px;">Check-in</th>
-                            <th style="width:120px;">Check-out</th>
-                            <th style="width:80px;">Total</th>
-                            <th style="min-width:160px;">City / State</th>
-                            <th class="text-end" style="width:170px;">Actions</th>
+                        <tr id="table-headers-row">
+                            <!-- dynamically populated -->
                         </tr>
                     </thead>
                     <tbody id="booking-table">
@@ -66,6 +93,7 @@
                     </tbody>
                 </table>
             </div>
+            <div id="pagination-container" class="p-3 border-top bg-white"></div>
         </div>
     </div>
 </div>
@@ -444,10 +472,17 @@ $(function(){
     const $search = $('#search');
     const $bookingIdSearch = $('#booking_id_search');
     const $btnSearch = $('#btn-search');
+    let currentPage = 1;
 
     // helpers for UI controls
-    $('#clear-search').on('click', function(){ $search.val(''); loadBookings(); });
-    $('#clear-booking-id').on('click', function(){ $bookingIdSearch.val(''); loadBookings(); });
+    $('#btn-clear-filters').on('click', function() {
+        $('.column-filter').val('');
+        $search.val('');
+        $bookingIdSearch.val('');
+        currentPage = 1;
+        loadBookings();
+    });
+
     $('#btn-refresh').on('click', function(){
         $search.val(''); $bookingIdSearch.val('');
         // reload reference data before bookings so names appear instead of codes
@@ -456,19 +491,118 @@ $(function(){
 
     function buildQueryParams() {
         const params = {
-            per_page: 99999  // Load all records, no pagination limit
+            page: currentPage,
+            per_page: 25
         };
         const s = $search.val()?.trim();
         const b = $bookingIdSearch.val()?.trim();
         if (s) params.search = s;
         if (b) params.booking_id = b;
+
+        DB_COLUMNS.forEach(col => {
+            if (col.filterable) {
+                const val = $(`#filter_${col.key}`).val()?.trim();
+                if (val) {
+                    params[`filter_${col.key}`] = val;
+                }
+            }
+        });
+
         return params;
     }
 
+    const DB_COLUMNS = [
+        { key: 'index', label: '#', defaultVisible: true, filterable: false },
+        { key: 'booking_id', exportKey: 'booking_id', label: 'Booking ID', defaultVisible: true, filterable: true, type: 'text' },
+        { key: 'name', exportKey: 'name', label: 'Name', defaultVisible: true, filterable: true, type: 'text' },
+        { key: 'father_name', exportKey: 'father_name', label: 'Father Name', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'phone', exportKey: 'phone', label: 'Phone', defaultVisible: true, filterable: true, type: 'text' },
+        { key: 'type', exportKey: 'type', label: 'Type', defaultVisible: true, filterable: true, type: 'select', options: ['family', 'group'] },
+        { key: 'aadhar_number', exportKey: 'aadhar_number', label: 'Aadhar', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'age', exportKey: 'age', label: 'Age', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'gender', exportKey: 'gender', label: 'Gender', defaultVisible: false, filterable: true, type: 'select', options: ['Male', 'Female'] },
+        { key: 'ms_name', exportKey: 'ms_name', label: 'MS Name', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'mid', exportKey: 'mid', label: 'MID', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'city', exportKey: 'city', label: 'City', defaultVisible: true, filterable: true, type: 'text' },
+        { key: 'state', exportKey: 'state', label: 'State', defaultVisible: true, filterable: true, type: 'text' },
+        { key: 'aanchal', exportKey: 'aanchal', label: 'Aanchal', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'travel_type', exportKey: 'travel_type', label: 'Travel Type', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'check_in_date', exportKey: 'check_in_date', label: 'Check-In Date', defaultVisible: true, filterable: true, type: 'date' },
+        { key: 'check_in_time', exportKey: 'check_in_time', label: 'Check-In Time', defaultVisible: false, filterable: true, type: 'time' },
+        { key: 'check_out_date', exportKey: 'check_out_date', label: 'Check-Out Date', defaultVisible: true, filterable: true, type: 'date' },
+        { key: 'check_out_time', exportKey: 'check_out_time', label: 'Check-Out Time', defaultVisible: false, filterable: true, type: 'time' },
+        { key: 'total_persons', exportKey: 'total_persons', label: 'Total Persons', defaultVisible: true, filterable: true, type: 'text' },
+        { key: 'family_coming', exportKey: 'family_coming', label: 'Family Coming', defaultVisible: false, filterable: true, type: 'select', options: ['yes', 'no'] },
+        { key: 'no_of_people', exportKey: 'no_of_people', label: 'No of People', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'no_of_children', exportKey: 'no_of_children', label: 'No of Children', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'total_male', exportKey: 'total_male', label: 'Total Male', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'total_female', exportKey: 'total_female', label: 'Total Female', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'sixty_plus_members', exportKey: 'sixty_plus_members', label: '60+ Members', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'sixty_plus_male', exportKey: 'sixty_plus_male', label: '60+ Male', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'sixty_plus_female', exportKey: 'sixty_plus_female', label: '60+ Female', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'is_veer_parivar', exportKey: 'is_veer_parivar', label: 'Veer Parivar', defaultVisible: false, filterable: true, type: 'select', options: ['yes', 'no'] },
+        { key: 'remark', exportKey: 'remark', label: 'Remark', defaultVisible: false, filterable: true, type: 'text' },
+        { key: 'actions', label: 'Actions', defaultVisible: true, filterable: false }
+    ];
+
+    function initDynamicHeaders() {
+        let dropdownHtml = '';
+        let headersHtml = '';
+
+        DB_COLUMNS.forEach((col, idx) => {
+            const checked = col.defaultVisible ? 'checked' : '';
+            const exportAttr = col.exportKey ? `data-export-key="${col.exportKey}"` : '';
+            
+            dropdownHtml += `<li><label class="dropdown-item"><input type="checkbox" class="col-toggle" value="${idx}" ${exportAttr} ${checked}> ${col.label}</label></li>`;
+            
+            let filterHtml = '';
+            if (col.filterable) {
+                let inputElement = '';
+                if (col.type === 'select') {
+                    const optionsHtml = col.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+                    inputElement = `<select class="form-select form-select-sm column-filter" id="filter_${col.key}"><option value="">All</option>${optionsHtml}</select>`;
+                } else {
+                    inputElement = `<input type="${col.type}" class="form-control form-control-sm column-filter" id="filter_${col.key}" placeholder="Search...">`;
+                }
+
+                filterHtml = `
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-sm btn-link p-0 text-muted ms-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+                    <div class="dropdown-menu p-2 shadow" style="min-width: 200px;">
+                        ${inputElement}
+                    </div>
+                </div>`;
+            }
+
+            const style = col.defaultVisible ? '' : 'display: none;';
+            headersHtml += `<th style="${style}" data-col-idx="${idx}" class="text-nowrap">${col.label} ${filterHtml}</th>`;
+        });
+
+        $('#column-toggles').html(dropdownHtml);
+        $('#table-headers-row').html(headersHtml);
+
+        $('.column-filter').on('change', function() {
+            currentPage = 1;
+            loadBookings();
+        });
+        $('.column-filter[type="text"], .column-filter[type="number"]').on('keypress', function(e) {
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                currentPage = 1;
+                loadBookings();
+            }
+        });
+        
+        $('.col-toggle').on('change', function() {
+            applyColumnVisibility();
+        });
+    }
+
     async function loadBookings() {
-        $tbody.html(`<tr><td colspan="10" class="text-center text-muted py-4">Loading...</td></tr>`);
+        $tbody.html(`<tr><td colspan="${DB_COLUMNS.length}" class="text-center text-muted py-4">Loading...</td></tr>`);
         try {
-            // make sure reference data is loaded (to show names instead of codes)
             if ((!allCities || allCities.length===0) || (!allStates || allStates.length===0)) {
                 await loadReferenceData();
             }
@@ -477,83 +611,128 @@ $(function(){
             const res = await axios.get(`${localApiBase}/bookings?${qs}`);
             const data = res.data.data || [];
             if (!data.length) {
-                $tbody.html(`<tr><td colspan="10" class="text-center text-muted py-4">No pending bookings found</td></tr>`);
+                $tbody.html(`<tr><td colspan="${DB_COLUMNS.length}" class="text-center text-muted py-4">No pending bookings found</td></tr>`);
+                if(res.data.meta) renderPagination(res.data.meta, '#pagination-container');
                 return;
             }
 
             const rows = data.map((b, i) => {
-                const cityObj = findIn(allCities, b.city);
-                const stateObj = findIn(allStates, b.state);
-                const cityName = cityObj ? (cityObj.city_name ?? cityObj.name ?? cityObj) : ( (b.city && typeof b.city === 'object') ? (b.city.city_name ?? b.city.name ?? '') : (b.city ?? '') );
-                const stateName = stateObj ? (stateObj.state_name ?? stateObj.name ?? stateObj) : ( (b.state && typeof b.state === 'object') ? (b.state.state_name ?? b.state.name ?? '') : (b.state ?? '') );
-                const cityState = cityName && stateName ? `${cityName}/${stateName}` : (cityName || stateName || '');
-
+                const getCity = v => findIn(allCities, v)?.city_name ?? findIn(allCities, v)?.name ?? (typeof v === 'object' ? v?.city_name : v) ?? '';
+                const getState = v => findIn(allStates, v)?.state_name ?? findIn(allStates, v)?.name ?? (typeof v === 'object' ? v?.state_name : v) ?? '';
+                const getAanchal = v => findIn(allAnchals, v)?.name ?? (typeof v === 'object' ? v?.name : v) ?? '';
+                
                 const typeBadge = b.type === 'family' ? 'info' : 'warning';
-                return `<tr>
-                    <td>${i + 1}</td>
-                    <td>${b.booking_id ?? '—'}</td>
-                    <td>${b.name ?? ''}</td>
-                    <td>${b.phone ?? ''}</td>
-                    <td><span class="badge bg-${typeBadge} text-dark badge-type">${b.type}</span></td>
-                    <td>
-                        ${b.check_in_date ?? ''}
-                        ${b.check_in_time ? `<br><small class="text-muted">${b.check_in_time}</small>` : ''}
-                    </td>
-                    <td>
-                        ${b.check_out_date ?? ''}
-                        ${b.check_out_time ? `<br><small class="text-muted">${b.check_out_time}</small>` : ''}
-                    </td>
-                    <td>${b.total_persons ?? ''}</td>
-                    <td>${cityState}</td>
-                 // replace the actions column generation inside your rows map with this block
-<td class="text-end">
-    <div class="btn-group btn-group-sm" role="group">
-        <button class="btn btn-outline-primary" title="View" onclick="viewMore('${b.type}', ${b.id})"><i class="bi bi-eye"></i></button>
-        <button class="btn btn-outline-secondary" title="Edit" onclick="openEdit('${b.type}', ${b.id})"><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-outline-danger" title="Reject" onclick="rejectBooking('${b.type}', ${b.id})"><i class="bi bi-x-lg"></i></button>
-    </div>
+                
+                const actionHtml = `
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-primary" title="View" onclick="viewMore('${b.type}', ${b.id})"><i class="bi bi-eye"></i></button>
+                        <button class="btn btn-outline-secondary" title="Edit" onclick="openEdit('${b.type}', ${b.id})"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-outline-danger" title="Reject" onclick="rejectBooking('${b.type}', ${b.id})"><i class="bi bi-x-lg"></i></button>
+                    </div>
 
-    ${ (b.status && b.status === 'completed') ? `
-        <div class="mt-2">
-            <button class="btn btn-primary btn-sm show-booking-btn"
-                    data-bs-toggle="modal"
-                    data-bs-target="#bookingModal"
-                    data-hotel="${b.hotel?.hotel_name ?? 'N/A'}"
-                    data-rooms="${(b.booked_rooms || []).map(r=>r.room_number).join(', ')}">
-                🏨 Show Booking
-            </button>
+                    ${ (b.status && b.status === 'completed') ? `
+                        <div class="mt-2">
+                            <button class="btn btn-primary btn-sm show-booking-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#bookingModal"
+                                    data-hotel="${b.hotel?.hotel_name ?? 'N/A'}"
+                                    data-rooms="${(b.booked_rooms || []).map(r=>r.room_number).join(', ')}">
+                                🏨 Show Booking
+                            </button>
+                            <form action="/group-booking/checkout/${b.id}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to check out this booking?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-warning btn-sm">🔓 Check Out</button>
+                            </form>
+                        </div>
+                    ` : `
+                        <div class="mt-2">
+                            <form action="/alot-room" method="GET" class="d-inline">
+                                <input type="hidden" name="booking_id" value="${b.id}">
+                                <input type="hidden" name="total_persons" value="${b.total_persons ?? ''}">
+                                <input type="hidden" name="booking_type" value="${b.type}">
+                                <button type="submit" class="btn btn-success btn-sm" title="Allot Room">✅ Allot Room</button>
+                            </form>
+                        </div>
+                    `}
+                `;
 
-            <form action="/group-booking/checkout/${b.id}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to check out this booking?');">
-                <input type="hidden" name="_token" value="{{ csrf_token() }}"> <!-- if needed -->
-                <button type="submit" class="btn btn-warning btn-sm">🔓 Check Out</button>
-            </form>
-        </div>
-    ` : `
-        <div class="mt-2">
-            <form action="/alot-room" method="GET" class="d-inline">
-                <input type="hidden" name="booking_id" value="${b.id}">
-                <input type="hidden" name="total_persons" value="${b.total_persons ?? ''}">
-                <input type="hidden" name="booking_type" value="${b.type}">
-                <!-- optional: include hotel_id if you want a default -->
-                <button type="submit" class="btn btn-success btn-sm" title="Allot Room">✅ Allot Room</button>
-            </form>
-        </div>
-    `}  
-</td>
-
-                </tr>`;
+                let trHtml = '<tr>';
+                DB_COLUMNS.forEach((col, idx) => {
+                    const style = col.defaultVisible ? '' : 'display: none;';
+                    let val = '';
+                    if (col.key === 'index') val = ((currentPage - 1) * 25) + i + 1;
+                    else if (col.key === 'actions') val = actionHtml;
+                    else if (col.key === 'type') val = `<span class="badge bg-${typeBadge} text-dark badge-type">${b.type}</span>`;
+                    else if (col.key === 'booking_id') val = b.display_id ?? b.booking_id ?? (b.type === 'family' ? 'F-' : 'G-') + (b.id + 100);
+                    else if (col.key === 'city') val = getCity(b.city);
+                    else if (col.key === 'state') val = getState(b.state);
+                    else if (col.key === 'aanchal') val = getAanchal(b.aanchal);
+                    else val = b[col.key] ?? '';
+                    
+                    trHtml += `<td style="${style}" data-col-idx="${idx}">${val}</td>`;
+                });
+                trHtml += '</tr>';
+                return trHtml;
             }).join('');
+            
             $tbody.html(rows);
+            if(res.data.meta) {
+                renderPagination(res.data.meta, '#pagination-container');
+            }
+            applyColumnVisibility();
         } catch (err) {
             console.error(err);
             $tbody.html(`<tr><td colspan="10" class="text-danger text-center py-4">Error loading data</td></tr>`);
         }
     }
 
+    function renderPagination(meta, containerId) {
+        if (!meta || meta.total === 0) {
+            $(containerId).html('');
+            return;
+        }
+        let html = `
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="text-muted small">
+                Showing ${((meta.current_page - 1) * meta.per_page) + 1} to ${Math.min(meta.current_page * meta.per_page, meta.total)} of ${meta.total} entries
+            </div>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item ${meta.current_page === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${meta.current_page - 1}); return false;">Previous</a>
+                </li>
+                <li class="page-item disabled"><a class="page-link" href="#">Page ${meta.current_page} of ${meta.last_page}</a></li>
+                <li class="page-item ${meta.current_page === meta.last_page ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${meta.current_page + 1}); return false;">Next</a>
+                </li>
+            </ul>
+        </div>`;
+        $(containerId).html(html);
+    }
+    
+    window.changePage = function(page) {
+        currentPage = page;
+        loadBookings();
+    };
+
     // wire search
     $btnSearch.on('click', () => loadBookings());
     $search.on('keypress', function(e){ if (e.key === 'Enter') { e.preventDefault(); loadBookings(); }});
     $bookingIdSearch.on('keypress', function(e){ if (e.key === 'Enter') { e.preventDefault(); loadBookings(); }});
+
+    function applyColumnVisibility() {
+        $('.col-toggle').each(function() {
+            const colIdx = $(this).val();
+            const isChecked = $(this).is(':checked');
+            // Hide/show headers
+            $('table thead tr').each(function() {
+                $(this).find('th').eq(colIdx).toggle(isChecked);
+            });
+            // Hide/show cells
+            $('table tbody tr').each(function() {
+                $(this).find('td').eq(colIdx).toggle(isChecked);
+            });
+        });
+    }
 
     /**************************************************************************
      * View More
@@ -746,6 +925,19 @@ $(function(){
                 params.append('booking_id', bookingId.trim());
             }
             
+            $('.column-filter').each(function() {
+                if ($(this).val().trim()) {
+                    params.append($(this).attr('id'), $(this).val().trim());
+                }
+            });
+
+            $('.col-toggle:checked').each(function() {
+                const key = $(this).data('export-key');
+                if (key) {
+                    params.append('visible_columns[]', key);
+                }
+            });
+            
             // Show loading message
             const loadingMessage = format === 'excel' ? 'Preparing Excel file...' : 'Generating PDF...';
             Swal.fire({
@@ -811,6 +1003,7 @@ $(function(){
     /**************************************************************************
      * Initial load: load reference data then bookings
      **************************************************************************/
+    initDynamicHeaders();
     loadReferenceData().then(() => loadBookings());
 });
 </script>

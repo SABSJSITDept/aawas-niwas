@@ -124,6 +124,98 @@ class RegistrationController extends Controller
         }
     }
 
+    private function applyDynamicFilters($familyQuery, $groupQuery, Request $request)
+    {
+        $filterableColumns = [
+            'name', 'father_name', 'phone', 'aadhar_number', 'age', 'gender', 'ms_name', 'mid',
+            'city', 'state', 'aanchal', 'travel_type', 'check_in_date', 'check_in_time', 
+            'check_out_date', 'check_out_time', 'family_coming', 'no_of_people', 'no_of_children',
+            'total_male', 'total_female', 'sixty_plus_members', 'sixty_plus_male', 'sixty_plus_female',
+            'is_veer_parivar', 'remark'
+        ];
+
+        foreach ($filterableColumns as $column) {
+            $value = $request->get("filter_{$column}");
+            if ($value !== null && $value !== '') {
+                $exactMatchCols = ['age', 'no_of_people', 'no_of_children', 'total_male', 'total_female', 'sixty_plus_members', 'sixty_plus_male', 'sixty_plus_female', 'check_in_date', 'check_out_date', 'check_in_time', 'check_out_time', 'gender', 'travel_type', 'family_coming', 'is_veer_parivar', 'mid', 'aanchal'];
+                if (in_array($column, $exactMatchCols)) {
+                    $familyQuery->where($column, $value);
+                    $groupQuery->where($column, $value);
+                } else {
+                    if ($column === 'city') {
+                        $familyQuery->where(function($q) use ($column, $value) {
+                            $q->where($column, 'like', "%{$value}%")
+                              ->orWhereHas('cityName', function($q2) use ($value) {
+                                  $q2->where('city_name', 'like', "%{$value}%");
+                              });
+                        });
+                        $groupQuery->where(function($q) use ($column, $value) {
+                            $q->where($column, 'like', "%{$value}%")
+                              ->orWhereHas('cityName', function($q2) use ($value) {
+                                  $q2->where('city_name', 'like', "%{$value}%");
+                              });
+                        });
+                    } elseif ($column === 'state') {
+                        $familyQuery->where(function($q) use ($column, $value) {
+                            $q->where($column, 'like', "%{$value}%")
+                              ->orWhereHas('stateName', function($q2) use ($value) {
+                                  $q2->where('state_name', 'like', "%{$value}%");
+                              });
+                        });
+                        $groupQuery->where(function($q) use ($column, $value) {
+                            $q->where($column, 'like', "%{$value}%")
+                              ->orWhereHas('stateName', function($q2) use ($value) {
+                                  $q2->where('state_name', 'like', "%{$value}%");
+                              });
+                        });
+                    } else {
+                        $familyQuery->where($column, 'like', "%{$value}%");
+                        $groupQuery->where($column, 'like', "%{$value}%");
+                    }
+                }
+            }
+        }
+
+        $filter_type = $request->get('filter_type');
+        if ($filter_type === 'family') {
+            $groupQuery->whereRaw('1 = 0');
+        } elseif ($filter_type === 'group') {
+            $familyQuery->whereRaw('1 = 0');
+        }
+
+        $booking_id = $request->get('booking_id') ?? $request->get('filter_booking_id');
+        if ($booking_id) {
+            $normalized = trim($booking_id);
+            if (str_starts_with($normalized, 'F-') || str_starts_with($normalized, 'f-')) {
+                $num = (int) substr($normalized, 2);
+                $familyQuery->where('id', $num - 100);
+                $groupQuery->whereRaw('1 = 0');
+            } elseif (str_starts_with($normalized, 'G-') || str_starts_with($normalized, 'g-')) {
+                $num = (int) substr($normalized, 2);
+                $groupQuery->where('id', $num - 100);
+                $familyQuery->whereRaw('1 = 0');
+            } else {
+                $num = (int) $normalized;
+                $familyQuery->where('id', $num - 100);
+                $groupQuery->where('id', $num - 100);
+            }
+        }
+
+        $search = $request->get('search');
+        if ($search) {
+            $familyQuery->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('phone', 'like', "%$search%")
+                  ->orWhere('aadhar_number', 'like', "%$search%");
+            });
+            $groupQuery->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('phone', 'like', "%$search%")
+                  ->orWhere('aadhar_number', 'like', "%$search%");
+            });
+        }
+    }
+
     /**
      * Return merged list of pending bookings from family_booking and group_bookings
      * Returns JSON with manual pagination (so we can merge two different table structures)
@@ -133,72 +225,11 @@ class RegistrationController extends Controller
     $perPage = (int) $request->get('per_page', 10);
     $page = max(1, (int) $request->get('page', 1));
 
-    // Common filters
-    $search = $request->get('search');
-    $aadhar = $request->get('aadhar_number');
-    $city = $request->get('city');
-    $aanchal = $request->get('aanchal');
-    $travel_type = $request->get('travel_type');
-    $check_in_date = $request->get('check_in_date');
-    $booking_id = $request->get('booking_id');
-
     // Base queries (only pending) - with relationships for city/state/aanchal names
     $familyQuery = FamilyBooking::with(['cityName', 'stateName', 'aanchalName'])->where('status', 'pending');
     $groupQuery = GroupBooking::with(['cityName', 'stateName', 'aanchalName'])->where('status', 'pending');
 
-    // Apply filters to both queries
-    if ($search) {
-        $familyQuery->where(function($q) use ($search) {
-            $q->where('name', 'like', "%$search%")
-              ->orWhere('phone', 'like', "%$search%");
-        });
-        $groupQuery->where(function($q) use ($search) {
-            $q->where('name', 'like', "%$search%")
-              ->orWhere('phone', 'like', "%$search%");
-        });
-    }
-
-    if ($aadhar) {
-        $familyQuery->where('aadhar_number', 'like', "%$aadhar%");
-        $groupQuery->where('aadhar_number', 'like', "%$aadhar%");
-    }
-
-    if ($city) {
-        $familyQuery->where('city', 'like', "%$city%");
-        $groupQuery->where('city', 'like', "%$city%");
-    }
-
-    if ($aanchal) {
-        $familyQuery->where('aanchal', $aanchal);
-        $groupQuery->where('aanchal', $aanchal);
-    }
-
-    if ($travel_type) {
-        $familyQuery->where('travel_type', $travel_type);
-        $groupQuery->where('travel_type', $travel_type);
-    }
-
-    if ($check_in_date) {
-        $familyQuery->where('check_in_date', $check_in_date);
-        $groupQuery->where('check_in_date', $check_in_date);
-    }
-
-    if ($booking_id) {
-        $normalized = trim($booking_id);
-        if (str_starts_with($normalized, 'F-') || str_starts_with($normalized, 'f-')) {
-            $num = (int) substr($normalized, 2);
-            $familyQuery->where('id', $num - 100);
-            $groupQuery->whereRaw('1 = 0');
-        } elseif (str_starts_with($normalized, 'G-') || str_starts_with($normalized, 'g-')) {
-            $num = (int) substr($normalized, 2);
-            $groupQuery->where('id', $num - 100);
-            $familyQuery->whereRaw('1 = 0');
-        } else {
-            $num = (int) $normalized;
-            $familyQuery->where('id', $num - 100);
-            $groupQuery->where('id', $num - 100);
-        }
-    }
+    $this->applyDynamicFilters($familyQuery, $groupQuery, $request);
 
     // Fetch and convert to arrays (include all model attributes)
     // Fetch and convert to arrays (include all model attributes)
@@ -456,69 +487,10 @@ public function update(Request $request, $type, $id)
         $perPage = 1000000; // large, for export
         $page = 1;
 
-        $search = $request->get('search');
-        $aadhar = $request->get('aadhar_number');
-        $city = $request->get('city');
-        $aanchal = $request->get('aanchal');
-        $travel_type = $request->get('travel_type');
-        $check_in_date = $request->get('check_in_date');
-        $booking_id = $request->get('booking_id');
-
         $familyQuery = \App\Models\FamilyBooking::with(['cityName', 'stateName', 'aanchalName'])->where('status', 'pending');
         $groupQuery = \App\Models\GroupBooking::with(['cityName', 'stateName', 'aanchalName'])->where('status', 'pending');
 
-        if ($search) {
-            $familyQuery->where(function($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                  ->orWhere('phone', 'like', "%$search%");
-            });
-            $groupQuery->where(function($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                  ->orWhere('phone', 'like', "%$search%");
-            });
-        }
-
-        if ($aadhar) {
-            $familyQuery->where('aadhar_number', 'like', "%$aadhar%");
-            $groupQuery->where('aadhar_number', 'like', "%$aadhar%");
-        }
-
-        if ($city) {
-            $familyQuery->where('city', 'like', "%$city%");
-            $groupQuery->where('city', 'like', "%$city%");
-        }
-
-        if ($aanchal) {
-            $familyQuery->where('aanchal', $aanchal);
-            $groupQuery->where('aanchal', $aanchal);
-        }
-
-        if ($travel_type) {
-            $familyQuery->where('travel_type', $travel_type);
-            $groupQuery->where('travel_type', $travel_type);
-        }
-
-        if ($check_in_date) {
-            $familyQuery->where('check_in_date', $check_in_date);
-            $groupQuery->where('check_in_date', $check_in_date);
-        }
-
-        if ($booking_id) {
-            $normalized = trim($booking_id);
-            if (str_starts_with($normalized, 'F-') || str_starts_with($normalized, 'f-')) {
-                $num = (int) substr($normalized, 2);
-                $familyQuery->where('id', $num - 100);
-                $groupQuery->whereRaw('1 = 0');
-            } elseif (str_starts_with($normalized, 'G-') || str_starts_with($normalized, 'g-')) {
-                $num = (int) substr($normalized, 2);
-                $groupQuery->where('id', $num - 100);
-                $familyQuery->whereRaw('1 = 0');
-            } else {
-                $num = (int) $normalized;
-                $familyQuery->where('id', $num - 100);
-                $groupQuery->where('id', $num - 100);
-            }
-        }
+        $this->applyDynamicFilters($familyQuery, $groupQuery, $request);
 $families = $familyQuery->orderByDesc('id')->get()->map(function($b) {
     $arr = $b->toArray();
     $arr['type'] = 'family';
@@ -566,9 +538,42 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
             
             $data = $this->getMergedDataForExport($request); // Collection of arrays
 
+            $visibleColumnsKeys = $request->get('visible_columns');
+            $allColumnsMap = [
+                'type' => 'Type',
+                'booking_id' => 'Booking ID',
+                'name' => 'Name',
+                'father_name' => 'Father Name',
+                'phone' => 'Phone',
+                'aadhar_number' => 'Aadhar Number',
+                'age' => 'Age',
+                'mid' => 'MID',                
+                'city' => 'City',
+                'state' => 'State',
+                'aanchal' => 'Aanchal',
+                'travel_type' => 'Travel Type',
+                'check_in_date' => 'Check-in Date',
+                'check_in_time' => 'Check-in Time',
+                'check_out_date' => 'Check-out Date',
+                'check_out_time' => 'Check-out Time',
+                'total_persons' => 'Total Persons'
+            ];
+
+            // If no visible columns sent, default to all
+            if (empty($visibleColumnsKeys) || !is_array($visibleColumnsKeys)) {
+                $visibleColumnsKeys = array_keys($allColumnsMap);
+            }
+
+            $exportHeadings = [];
+            foreach ($visibleColumnsKeys as $key) {
+                if (isset($allColumnsMap[$key])) {
+                    $exportHeadings[] = $allColumnsMap[$key];
+                }
+            }
+
             // prepare flat rows — pick only the columns you specified
             // Ensure all strings are properly UTF-8 encoded
-            $rows = $data->map(function($row){
+            $rows = $data->map(function($row) use ($visibleColumnsKeys) {
                 $ensureUtf8 = function($value) {
                     if (!is_string($value)) return $value;
                     // Check if already UTF-8, if not convert
@@ -578,7 +583,7 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                     return $value;
                 };
                 
-                return [
+                $fullRow = [
                     'type' => $ensureUtf8($row['type'] ?? ''),
                     'booking_id' => $ensureUtf8($row['booking_id'] ?? ''),
                     'name' => $ensureUtf8($row['name'] ?? ''),
@@ -597,12 +602,20 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                     'check_out_time' => $ensureUtf8($row['check_out_time'] ?? ''),
                     'total_persons' => $ensureUtf8($row['total_persons'] ?? '')
                 ];
+
+                $filteredRow = [];
+                foreach ($visibleColumnsKeys as $key) {
+                    if (isset($fullRow[$key])) {
+                        $filteredRow[$key] = $fullRow[$key];
+                    }
+                }
+                return $filteredRow;
             })->toArray();
 
         if ($format === 'excel') {
             // Excel export using proper export class
             $filename = 'registrations-' . now()->format('Ymd-His') . '.xlsx';
-            $export = new RegistrationExport($rows);
+            $export = new RegistrationExport($rows, $exportHeadings);
             
             Log::info('Excel export completed', ['filename' => $filename, 'rows' => count($rows)]);
             return Excel::download($export, $filename, \Maatwebsite\Excel\Excel::XLSX);
@@ -668,8 +681,10 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
     public function completedList(Request $request)
     {
         $statuses = ['completed', 'rejected', 'check-out'];
-        $familyQuery = FamilyBooking::whereIn('status', $statuses);
-        $groupQuery = GroupBooking::whereIn('status', $statuses);
+        $familyQuery = FamilyBooking::with(['cityName', 'stateName', 'aanchalName'])->whereIn('status', $statuses);
+        $groupQuery = GroupBooking::with(['cityName', 'stateName', 'aanchalName'])->whereIn('status', $statuses);
+
+        $this->applyDynamicFilters($familyQuery, $groupQuery, $request);
 
         $families = $familyQuery->orderByDesc('id')->get()->map(function($b) {
             $arr = $b->toArray();
@@ -692,7 +707,21 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                 return ($item['type'] === 'family' ? (1000 + (int)$item['id']) : (2000 + (int)$item['id']));
             })->values();
 
-        return response()->json(['data' => $merged]);
+        $perPage = (int) $request->get('per_page', 25);
+        $page = max(1, (int) $request->get('page', 1));
+        
+        $total = $merged->count();
+        $sliced = $merged->slice(($page - 1) * $perPage, $perPage)->values();
+
+        return response()->json([
+            'data' => $sliced,
+            'meta' => [
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $page,
+                'last_page' => (int) ceil($total / max(1, $perPage)) ?: 1,
+            ]
+        ]);
     }
 
     /**
@@ -713,18 +742,7 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
             $familyQuery = FamilyBooking::with(['cityName', 'stateName', 'aanchalName'])->whereIn('status', $statuses);
             $groupQuery = GroupBooking::with(['cityName', 'stateName', 'aanchalName'])->whereIn('status', $statuses);
 
-            // Add search filters
-            $search = $request->get('search');
-            if ($search) {
-                $familyQuery->where(function($q) use ($search) {
-                    $q->where('name', 'like', "%$search%")
-                      ->orWhere('phone', 'like', "%$search%");
-                });
-                $groupQuery->where(function($q) use ($search) {
-                    $q->where('name', 'like', "%$search%")
-                      ->orWhere('phone', 'like', "%$search%");
-                });
-            }
+            $this->applyDynamicFilters($familyQuery, $groupQuery, $request);
 
             $families = $familyQuery->orderByDesc('id')->get()->map(function($b) {
                 $arr = $b->toArray();
@@ -748,9 +766,39 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
 
             $data = $families->merge($groups);
 
+            $visibleColumnsKeys = $request->get('visible_columns');
+            $allColumnsMap = [
+                'type' => 'Type',
+                'booking_id' => 'Booking ID',
+                'name' => 'Name',
+                'father_name' => 'Father Name',
+                'phone' => 'Phone',
+                'aadhar_number' => 'Aadhar Number',
+                'age' => 'Age',
+                'mid' => 'MID',                
+                'city' => 'City',
+                'state' => 'State',
+                'aanchal' => 'Aanchal',
+                'travel_type' => 'Travel Type',
+                'check_in_date' => 'Check-in Date',
+                'check_out_date' => 'Check-out Date',
+                'total_persons' => 'Total Persons'
+            ];
+
+            if (empty($visibleColumnsKeys) || !is_array($visibleColumnsKeys)) {
+                $visibleColumnsKeys = array_keys($allColumnsMap);
+            }
+
+            $exportHeadings = [];
+            foreach ($visibleColumnsKeys as $key) {
+                if (isset($allColumnsMap[$key])) {
+                    $exportHeadings[] = $allColumnsMap[$key];
+                }
+            }
+
             // Prepare flat rows for export - only required columns
-            $rows = $data->map(function($row){
-                return [
+            $rows = $data->map(function($row) use ($visibleColumnsKeys) {
+                $fullRow = [
                     'type' => $row['type'] ?? '',
                     'booking_id' => $row['booking_id'] ?? '',
                     'name' => $row['name'] ?? '',
@@ -767,11 +815,19 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                     'check_out_date' => $row['check_out_date'] ?? '',
                     'total_persons' => $row['total_persons'] ?? ''
                 ];
+                
+                $filteredRow = [];
+                foreach ($visibleColumnsKeys as $key) {
+                    if (isset($fullRow[$key])) {
+                        $filteredRow[$key] = $fullRow[$key];
+                    }
+                }
+                return $filteredRow;
             })->toArray();
 
             if ($format === 'excel') {
                 $filename = 'completed-registrations-' . now()->format('Ymd-His') . '.xlsx';
-                $export = new RegistrationExport($rows);
+                $export = new RegistrationExport($rows, $exportHeadings);
                 
                 Log::info('Completed Excel export completed', ['filename' => $filename, 'rows' => count($rows)]);
                 return Excel::download($export, $filename, \Maatwebsite\Excel\Excel::XLSX);
@@ -971,14 +1027,19 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
     public function checkoutList(Request $request)
     {
         $statuses = ['check-out'];
-        $familyQuery = FamilyBooking::whereIn('status', $statuses);
-        $groupQuery = GroupBooking::whereIn('status', $statuses);
+        $familyQuery = FamilyBooking::with(['cityName', 'stateName', 'aanchalName'])->whereIn('status', $statuses);
+        $groupQuery = GroupBooking::with(['cityName', 'stateName', 'aanchalName'])->whereIn('status', $statuses);
+
+        $this->applyDynamicFilters($familyQuery, $groupQuery, $request);
 
         $families = $familyQuery->orderByDesc('id')->get()->map(function($b) {
             $arr = $b->toArray();
             $arr['type'] = 'family';
             $arr['display_id'] = 'F-' . ($b->id + 100);
             $arr['total_persons'] = $b->total_persons ?? ($b->total_members ?? null);
+            $arr['city'] = $b->cityName?->city_name ?? ($b->city ?? '');
+            $arr['state'] = $b->stateName?->state_name ?? ($b->state ?? '');
+            $arr['aanchal'] = $b->aanchalName?->name ?? ($b->aanchal ?? '');
             return $arr;
         })->values()->toBase();
 
@@ -987,6 +1048,9 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
             $arr['type'] = 'group';
             $arr['display_id'] = 'G-' . ($b->id + 100);
             $arr['total_persons'] = $b->total_persons ?? ($b->total_members ?? null);
+            $arr['city'] = $b->cityName?->city_name ?? ($b->city ?? '');
+            $arr['state'] = $b->stateName?->state_name ?? ($b->state ?? '');
+            $arr['aanchal'] = $b->aanchalName?->name ?? ($b->aanchal ?? '');
             return $arr;
         })->values()->toBase();
 
@@ -995,7 +1059,21 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                 return ($item['type'] === 'family' ? (1000 + (int)$item['id']) : (2000 + (int)$item['id']));
             })->values();
 
-        return response()->json(['data' => $merged]);
+        $perPage = (int) $request->get('per_page', 25);
+        $page = max(1, (int) $request->get('page', 1));
+        
+        $total = $merged->count();
+        $sliced = $merged->slice(($page - 1) * $perPage, $perPage)->values();
+
+        return response()->json([
+            'data' => $sliced,
+            'meta' => [
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $page,
+                'last_page' => (int) ceil($total / max(1, $perPage)) ?: 1,
+            ]
+        ]);
     }
 
     /**
@@ -1106,14 +1184,19 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
     public function rejectedList(Request $request)
     {
         $statuses = ['rejected'];
-        $familyQuery = FamilyBooking::whereIn('status', $statuses);
-        $groupQuery = GroupBooking::whereIn('status', $statuses);
+        $familyQuery = FamilyBooking::with(['cityName', 'stateName', 'aanchalName'])->whereIn('status', $statuses);
+        $groupQuery = GroupBooking::with(['cityName', 'stateName', 'aanchalName'])->whereIn('status', $statuses);
+
+        $this->applyDynamicFilters($familyQuery, $groupQuery, $request);
 
         $families = $familyQuery->orderByDesc('id')->get()->map(function($b) {
             $arr = $b->toArray();
             $arr['type'] = 'family';
             $arr['display_id'] = 'F-' . ($b->id + 100);
             $arr['total_persons'] = $b->total_persons ?? ($b->total_members ?? null);
+            $arr['city'] = $b->cityName?->city_name ?? ($b->city ?? '');
+            $arr['state'] = $b->stateName?->state_name ?? ($b->state ?? '');
+            $arr['aanchal'] = $b->aanchalName?->name ?? ($b->aanchal ?? '');
             return $arr;
         })->values()->toBase();
 
@@ -1122,6 +1205,9 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
             $arr['type'] = 'group';
             $arr['display_id'] = 'G-' . ($b->id + 100);
             $arr['total_persons'] = $b->total_persons ?? ($b->total_members ?? null);
+            $arr['city'] = $b->cityName?->city_name ?? ($b->city ?? '');
+            $arr['state'] = $b->stateName?->state_name ?? ($b->state ?? '');
+            $arr['aanchal'] = $b->aanchalName?->name ?? ($b->aanchal ?? '');
             return $arr;
         })->values()->toBase();
 
@@ -1130,7 +1216,21 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                 return ($item['type'] === 'family' ? (1000 + (int)$item['id']) : (2000 + (int)$item['id']));
             })->values();
 
-        return response()->json(['data' => $merged]);
+        $perPage = (int) $request->get('per_page', 25);
+        $page = max(1, (int) $request->get('page', 1));
+        
+        $total = $merged->count();
+        $sliced = $merged->slice(($page - 1) * $perPage, $perPage)->values();
+
+        return response()->json([
+            'data' => $sliced,
+            'meta' => [
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $page,
+                'last_page' => (int) ceil($total / max(1, $perPage)) ?: 1,
+            ]
+        ]);
     }
 
     /**
