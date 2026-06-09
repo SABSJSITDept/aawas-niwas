@@ -23,8 +23,9 @@ class Auth1 extends Controller
         ]);
 
         // Attempt to authenticate the user
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            // If successful, redirect to the dashboard
+        if (Auth::attempt(['email' => $request->email, 'password' => $request->password], $request->boolean('remember'))) {
+            $request->session()->regenerate();
+
             return redirect()->route('admin.dashboard');
         } else {
             // If authentication fails, redirect back with an error message

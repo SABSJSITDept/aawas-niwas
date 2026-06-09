@@ -14,7 +14,6 @@ use App\Http\Controllers\RoomAllotmentController;
 use App\Exports\FamilyBookingExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth1;
 use App\Http\Controllers\Admin\NewsController;
 use App\Models\FamilyBooking;
 use App\Http\Controllers\FeedbackController;
@@ -32,13 +31,6 @@ use App\Http\Controllers\ParkingController;
 // ============================================================
 // PUBLIC ROUTES (No login required)
 // ============================================================
-
-// Auth routes
-Route::get('/login', [Auth1::class, 'showLogin'])->name('login');
-Route::post('/login', [Auth1::class, 'login']);
-Route::get('/register', [Auth1::class, 'showRegister'])->name('register');
-Route::post('/register', [Auth1::class, 'register']);
-Route::post('/logout', [Auth1::class, 'logout'])->name('logout');
 
 // Home page
 Route::get('/', [HomeController::class, 'index'])->name('home');
