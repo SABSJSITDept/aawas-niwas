@@ -50,6 +50,19 @@ class HotelController extends Controller
         $validated['status'] = 'active'; // या 'active' जैसा चाहिए
     }
 
+    $additionalContacts = [];
+    $names = $request->input('additional_contact_name', []);
+    $phones = $request->input('additional_contact_phone', []);
+    foreach ($names as $index => $name) {
+        if (!empty($name) && !empty($phones[$index])) {
+            $additionalContacts[] = [
+                'name' => $name,
+                'phone' => $phones[$index]
+            ];
+        }
+    }
+    $validated['additional_contacts'] = empty($additionalContacts) ? null : $additionalContacts;
+
     // 3) create record using validated data
     $hotel = \App\Models\HotelDetails::create($validated);
 
@@ -86,11 +99,24 @@ public function update(Request $request, $id)
         'status' => 'nullable|in:active,inactive',
     ]);
 
+    $additionalContacts = [];
+    $names = $request->input('additional_contact_name', []);
+    $phones = $request->input('additional_contact_phone', []);
+    foreach ($names as $index => $name) {
+        if (!empty($name) && !empty($phones[$index])) {
+            $additionalContacts[] = [
+                'name' => $name,
+                'phone' => $phones[$index]
+            ];
+        }
+    }
+
     $hotel = HotelDetails::findOrFail($id);
     $hotel->update([
         'hotel_name' => $request->hotel_name,
         'incharge_name' => $request->incharge_name,
         'contact_number' => $request->contact_number,
+        'additional_contacts' => empty($additionalContacts) ? null : $additionalContacts,
         'total_rooms' => $request->total_rooms,
         'common_bath' => $request->common_bath,
         'lift' => $request->lift,

@@ -52,6 +52,33 @@
                     <div class="form-text small text-muted">Only digits. Max 10 characters.</div>
                 </div>
 
+                <!-- Additional Contacts Dynamic Section -->
+                <div class="col-md-12 mb-3">
+                    <label class="form-label fw-semibold">👥 Additional Contact Persons (Optional)</label>
+                    <div id="additionalContactsContainer">
+                        @if(!empty($hotel->additional_contacts) && is_array($hotel->additional_contacts))
+                            @foreach($hotel->additional_contacts as $contact)
+                                <div class="row g-2 mb-2 align-items-center contact-row">
+                                    <div class="col-md-5">
+                                        <input type="text" name="additional_contact_name[]" class="form-control rounded-3 shadow-sm" placeholder="Contact Name" required value="{{ $contact['name'] ?? '' }}">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" name="additional_contact_phone[]" class="form-control rounded-3 shadow-sm" placeholder="Contact Number (10 digits)" required inputmode="numeric" pattern="\d{10}" maxlength="10" value="{{ $contact['phone'] ?? '' }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-contact-btn" title="Remove Contact">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endif
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addContactBtn">
+                        <i class="bi bi-plus-circle"></i> Add Another Contact
+                    </button>
+                </div>
+
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">🏨 Total Rooms</label>
                     <input type="number" name="total_rooms" class="form-control rounded-3 shadow-sm" placeholder="e.g. 50" required min="1"
@@ -243,6 +270,40 @@
         }
     } catch (err) {
         console.warn('Flash parse error', err);
+    }
+
+    // Dynamic Additional Contacts logic for edit form
+    const container = document.getElementById('additionalContactsContainer');
+    const addBtn = document.getElementById('addContactBtn');
+
+    if (container) {
+        // Attach event listeners to existing remove buttons
+        container.addEventListener('click', function (e) {
+            if (e.target.closest('.remove-contact-btn')) {
+                e.target.closest('.contact-row').remove();
+            }
+        });
+    }
+
+    if (addBtn && container) {
+      addBtn.addEventListener('click', function () {
+        const row = document.createElement('div');
+        row.className = 'row g-2 mb-2 align-items-center contact-row';
+        row.innerHTML = `
+          <div class="col-md-5">
+              <input type="text" name="additional_contact_name[]" class="form-control rounded-3 shadow-sm" placeholder="Contact Name" required>
+          </div>
+          <div class="col-md-5">
+              <input type="text" name="additional_contact_phone[]" class="form-control rounded-3 shadow-sm" placeholder="Contact Number (10 digits)" required inputmode="numeric" pattern="\\d{10}" maxlength="10">
+          </div>
+          <div class="col-md-2">
+              <button type="button" class="btn btn-outline-danger btn-sm remove-contact-btn" title="Remove Contact">
+                  <i class="bi bi-trash"></i>
+              </button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
     }
 
     });

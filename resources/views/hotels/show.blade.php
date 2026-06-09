@@ -22,7 +22,34 @@
         <div class="stats-container px-4 pb-4">
             <div class="row g-4 stats-row animate__animated animate__fadeInUp">
                 <div class="col-md-4">
-                    <div class="stat-card bg-white rounded-3 p-3 shadow-sm">
+                    <div class="stat-card bg-white rounded-3 p-3 shadow-sm h-100">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="stat-icon bg-info-subtle rounded-circle p-3 me-3">
+                                <i class="fas fa-address-book text-info fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">Contact Info</h5>
+                            </div>
+                        </div>
+                        <div>
+                            <strong>{{ $hotel->incharge_name }}</strong><br>
+                            <i class="fas fa-phone-alt text-muted me-1"></i> {{ $hotel->contact_number }}
+                            
+                            @if(!empty($hotel->additional_contacts) && is_array($hotel->additional_contacts))
+                                <hr class="my-2">
+                                <div class="small fw-bold text-muted mb-1">Additional Contacts:</div>
+                                @foreach($hotel->additional_contacts as $contact)
+                                    <div>
+                                        <span class="fw-semibold">{{ $contact['name'] ?? '' }}</span> - 
+                                        <i class="fas fa-phone-alt text-muted ms-1 me-1"></i>{{ $contact['phone'] ?? '' }}
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card bg-white rounded-3 p-3 shadow-sm h-100">
                         <div class="d-flex align-items-center">
                             <div class="stat-icon bg-primary-subtle rounded-circle p-3 me-3">
                                 <i class="fas fa-bed text-primary fs-4"></i>

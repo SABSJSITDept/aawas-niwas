@@ -125,6 +125,48 @@
   .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(107, 114, 128, 0.3); background: #4b5563; }
 </style>
 
+<style>
+/* ✅ Full-screen API Loading Overlay */
+#apiLoadingOverlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 99999;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 16px;
+}
+#apiLoadingOverlay .overlay-box {
+    background: white;
+    border-radius: 16px;
+    padding: 32px 48px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: overlayPop 0.2s ease;
+}
+#apiLoadingOverlay .overlay-box .spinner-border {
+    width: 3rem; height: 3rem;
+    border-width: 4px;
+    color: #2575fc;
+}
+#apiLoadingOverlay .overlay-box p {
+    margin: 12px 0 0;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #374151;
+    font-family: 'Poppins', sans-serif;
+}
+@keyframes overlayPop {
+    from { transform: scale(0.85); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+</style>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS (without preflight to prevent breaking Bootstrap) -->
@@ -138,6 +180,15 @@
     </script>
 </head>
 <body>
+
+<!-- ✅ Full-Screen API Loading Overlay -->
+<div id="apiLoadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); backdrop-filter:blur(3px); z-index:99999; justify-content:center; align-items:center; flex-direction:column;">
+    <div style="background:white; border-radius:16px; padding:32px 48px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div class="spinner-border" style="width:3rem;height:3rem;border-width:4px;color:#2575fc;" role="status"></div>
+        <p style="margin:14px 0 0; font-weight:600; font-size:1rem; color:#374151; font-family:'Poppins',sans-serif;">🔄 डेटा लोड हो रहा है...<br><small style="font-weight:400;color:#6b7280;">कृपया प्रतीक्षा करें</small></p>
+    </div>
+</div>
+
 <nav class="navbar navbar-expand-lg shadow-md bg-white" style="z-index: 1050; border-bottom: 3px solid #f59e0b;">
   <div class="container-fluid px-4 d-flex justify-content-between align-items-center py-2">
     
@@ -216,14 +267,30 @@
             <div class="form-step active" id="step-1">
                 <h4 class="text-primary mb-3">व्यक्तिगत जानकारी (Personal Details)</h4>
             <div class="row g-2">
+
+                <!-- 📱 Mobile FIRST -->
+                <div class="col-md-3 mb-3">
+                    <label class="form-label fw-semibold"><span style="color: red;">*</span> मोबाइल नंबर</label>
+                    <div class="input-group">
+                        <input type="text" name="phone" id="family_head_phone" class="form-control" maxlength="10"
+                               placeholder="10 अंक दर्ज करें"
+                               oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length===10) fetchFamilyHeadProfile(this.value);"
+                               required>
+                        <span class="input-group-text" id="familyHeadLoader" style="display:none;">
+                            <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                        </span>
+                    </div>
+                    <small class="text-muted">10 अंक डालते ही डेटा auto-fill होगा</small>
+                </div>
+
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">  <span style="color: red;">*</span> नाम </label>  
-                    <input type="text" name="name" class="form-control"  required>
+                    <input type="text" name="name" id="family_head_name" class="form-control" placeholder="API से auto-fill या manually लिखें" required>
                 </div>
             
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">  <span style="color: red;">*</span> पिता/पति का नाम </label>  
-                    <input type="text" name="father_name" class="form-control"  required>
+                    <input type="text" name="father_name" id="family_head_father" class="form-control"  required>
                 </div>
 
                 <div class="col-md-3 mb-3">
@@ -244,11 +311,6 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="col-md-3 mb-3">
-                    <label class="form-label fw-semibold">  <span style="color: red;">*</span> मोबाइल नंबर   </label>
-                    <input type="text" name="phone" class="form-control" maxlength="10"   required>
-                </div>  
 
 <div class="col-md-3 mb-3">
     <label class="form-label" style="color: red;">MID</label>
@@ -343,10 +405,11 @@
     </div>
 </div>
 
-<div class="col-md-3 mb-3" id="people_count"  > 
+<div class="col-md-3 mb-3" id="people_count" style="display: none;"> 
     <label class="form-label fw-semibold">  <span style="color: red;">*</span>  आपके साथ आने वाले सदस्यों की संख्या  </label>
-    <input type="number" name="no_of_people" class="form-control" id="no_of_people" min="1" max="10"   required>
-    <small id="people_error" class="text-danger d-none">आप अधिकतम 10 सादस्य का ही पंजीकरण  यहा करवा सकते है! </small>
+    <input type="number" name="no_of_people" class="form-control" id="no_of_people" min="0" max="9" value="0" readonly style="background-color: #e9ecef; cursor: not-allowed;" required>
+    <small id="people_error" class="text-danger d-none">आप अधिकतम 9 सादस्य का ही पंजीकरण  यहा करवा सकते है! (आप Head सहित अधिकतम 10)</small>
+    <small class="text-muted d-block">आप (Head) सहित अधिकतम 10 व्यक्ति</small>
 </div>
 
 <input type="hidden" name="total_persons" value="">
@@ -358,8 +421,16 @@
     <input type="number" name="no_of_children" class="form-control" id="no_of_children"   required>
 </div>
 
-
 <!-- Family Members Details -->
+<div class="col-md-12 mb-3" id="addMemberButtonsDiv" style="display: none;">
+    <label class="form-label fw-semibold d-block">सदस्य जोड़ें:</label>
+    <button type="button" class="btn btn-info text-white shadow-sm fw-bold me-2" onclick="showFamilySelectionModal()">
+        <i class="fas fa-users"></i> परिवार के सदस्यों को चुनें (API से)
+    </button>
+    <button type="button" class="btn btn-success shadow-sm fw-bold" onclick="addManualFamilyMember()">
+        <i class="fas fa-user-plus"></i> मैनुअली सदस्य जोड़ें
+    </button>
+</div>
 <div id="family_members_section"></div>
 
 <div class="col-md-3 mb-3 family-dependent">
@@ -464,6 +535,229 @@
    
 
 <script>
+// ✅ Helper: Show/Hide full-screen overlay
+function showApiLoader() {
+    const el = document.getElementById('apiLoadingOverlay');
+    if (el) { el.style.display = 'flex'; }
+}
+function hideApiLoader() {
+    const el = document.getElementById('apiLoadingOverlay');
+    if (el) { el.style.display = 'none'; }
+}
+
+// ✅ Helper: Fill City, State, Aanchal
+function fillCityStateAanchal(p) {
+    if (p.city) {
+        $("select[name='city'] option").filter(function() { return $(this).text().trim() === p.city.trim(); }).prop("selected", true).trigger("change");
+    }
+    if (p.state) {
+        $("select[name='state'] option").filter(function() { return $(this).text().trim() === p.state.trim(); }).prop("selected", true).trigger("change");
+    }
+    if (p.aanchal) {
+        $("select[name='aanchal'] option").filter(function() { return $(this).text().trim() === p.aanchal.trim(); }).prop("selected", true).trigger("change");
+    }
+}
+
+// ✅ Helper: Fill Age, Gender, MID, Aadhar
+function fillExtraFields(p, container = document) {
+    let ageInput = container.querySelector("input[name$='[age]']") || container.querySelector("input[name='age']");
+    let midInput = container.querySelector("input[name$='[mid]']") || container.querySelector("input[name='mid']");
+    let aadharInput = container.querySelector("input[name$='[aadhar_number]']") || container.querySelector("input[name='aadhar_number']");
+    
+    // Age handling: Calculate from birth_day if age is 0 or missing
+    let finalAge = p.age;
+    if ((!finalAge || finalAge == 0) && p.birth_day) {
+        let birthDate = new Date(p.birth_day);
+        let today = new Date();
+        let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+        let m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            calculatedAge--;
+        }
+        finalAge = calculatedAge > 0 ? calculatedAge : 0;
+    }
+    if (ageInput && finalAge !== undefined && finalAge !== null) {
+        ageInput.value = finalAge;
+    }
+
+    // MID handling
+    if (midInput && p.member_id) {
+        midInput.value = p.member_id;
+    }
+
+    // Aadhar handling: Combine adhar1, adhar2, adhar3
+    let fullAadhar = '';
+    if (p.adhar1 || p.adhar2 || p.adhar3) {
+        fullAadhar = (p.adhar1 || '') + (p.adhar2 || '') + (p.adhar3 || '');
+    } else if (p.aadhar_number || p.aadhar_card) {
+        fullAadhar = p.aadhar_number || p.aadhar_card;
+    }
+    
+    if (aadharInput && fullAadhar) {
+        aadharInput.value = fullAadhar;
+    }
+    
+    // Gender handling
+    if (p.gender) {
+        let g = p.gender.toLowerCase();
+        let radio = container.querySelector(`input[type='radio'][value='${g}']`);
+        if (radio) {
+            radio.checked = true;
+            let evt = new Event('change', { bubbles: true });
+            radio.dispatchEvent(evt);
+        }
+    }
+}
+
+// ✅ Global: Family Head profile fetch (called inline oninput)
+window.apiFamilyProfiles = []; // 📍 Store profiles globally
+
+function fetchFamilyHeadProfile(phone) {
+    showApiLoader();
+    const nameInput   = document.getElementById('family_head_name');
+    const fatherInput = document.getElementById('family_head_father');
+    const step1Div    = document.getElementById('step-1');
+    if (nameInput)   nameInput.value = '';
+    if (fatherInput) fatherInput.value = '';
+
+    $.ajax({
+        url: 'https://apiv1.sadhumargi.com/api/fetch-profiles',
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer vPW6doIdkAdf', 'Accept': 'application/json' },
+        data: { mobile_number: phone },
+        success: function (response) {
+            if (response.profiles && response.profiles.length > 0) {
+                window.apiFamilyProfiles = response.profiles; // 📍 Save for later selection
+                
+                if (response.profiles.length === 1) {
+                    const p = response.profiles[0];
+                    nameInput.value   = ((p.first_name||'') + ' ' + (p.last_name||'')).trim().toUpperCase();
+                    fatherInput.value = (p.father_name || p.fathers_name || p.guardian_name || '').toUpperCase();
+                    fillCityStateAanchal(p); // 📍 Auto-fill dropdowns
+                    fillExtraFields(p, step1Div); // 📍 Auto-fill age, gender, mid, aadhar
+                } else {
+                    let optionsHtml = response.profiles.map((p, i) =>
+                        `<option value="${i}">${p.first_name} ${p.last_name} — ${p.father_name || p.fathers_name || ''}</option>`
+                    ).join('');
+                    Swal.fire({
+                        title: 'सदस्य चुनें',
+                        html: `<select id="swal-fhead-select" class="form-select mt-2">${optionsHtml}</select>`,
+                        confirmButtonText: 'चुनें',
+                        showCancelButton: true,
+                        cancelButtonText: 'रद्द करें',
+                        preConfirm: () => document.getElementById('swal-fhead-select').value
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            const p = response.profiles[parseInt(result.value)];
+                            nameInput.value   = ((p.first_name||'') + ' ' + (p.last_name||'')).trim().toUpperCase();
+                            fatherInput.value = (p.father_name || p.fathers_name || p.guardian_name || '').toUpperCase();
+                            fillCityStateAanchal(p); // 📍 Auto-fill dropdowns
+                            fillExtraFields(p, step1Div); // 📍 Auto-fill age, gender, mid, aadhar
+                        }
+                    });
+                }
+            } else {
+                Swal.fire({ icon:'info', title:'प्रोफ़ाइल नहीं मिली', text:'इस नंबर से कोई प्रोफ़ाइल नहीं मिली।', confirmButtonText:'ठीक है' });
+            }
+        },
+        error: function () {
+            Swal.fire({ icon:'warning', title:'API Error', text:'डाटा प्राप्त नहीं हो रहा।', confirmButtonText:'ठीक है' });
+        },
+        complete: function () {
+            hideApiLoader();
+        }
+    });
+}
+
+// ✅ Show multiple member selection
+function showFamilySelectionModal() {
+    if (!window.apiFamilyProfiles || window.apiFamilyProfiles.length <= 1) {
+        Swal.fire({icon: 'info', title: 'कोई अन्य सदस्य नहीं', text: 'इस मोबाइल नंबर पर अन्य सदस्य उपलब्ध नहीं हैं।'});
+        return;
+    }
+
+    let headPhone = document.getElementById('family_head_phone').value.trim();
+    let headName = document.getElementById('family_head_name').value.trim().toUpperCase();
+
+    let optionsHtml = '<div class="text-start" style="max-height:300px; overflow-y:auto;">';
+    window.apiFamilyProfiles.forEach((p, i) => {
+        let fullName = ((p.first_name||'') + ' ' + (p.last_name||'')).trim().toUpperCase();
+        let isHead = (fullName === headName);
+        let disabledAttr = isHead ? 'disabled' : '';
+        let badge = isHead ? '<span class="badge bg-secondary ms-2">Head</span>' : '';
+
+        optionsHtml += `
+        <div class="form-check border-bottom py-2">
+            <input class="form-check-input swal-family-checkbox" type="checkbox" value="${i}" id="fprofile_${i}" ${disabledAttr}>
+            <label class="form-check-label fw-semibold" style="cursor:pointer;" for="fprofile_${i}">
+                ${fullName} <small class="text-muted d-block">${p.father_name || p.fathers_name || ''}</small>
+            </label>
+            ${badge}
+        </div>`;
+    });
+    optionsHtml += '</div>';
+
+    Swal.fire({
+        title: 'परिवार के सदस्य चुनें',
+        html: optionsHtml,
+        confirmButtonText: 'जोड़ें',
+        showCancelButton: true,
+        cancelButtonText: 'रद्द करें',
+        preConfirm: () => {
+            return Array.from(document.querySelectorAll('.swal-family-checkbox:checked')).map(cb => parseInt(cb.value));
+        }
+    }).then(result => {
+        if (result.isConfirmed && result.value.length > 0) {
+            let selectedProfiles = result.value.map(i => window.apiFamilyProfiles[i]);
+            
+            let currentCount = $(".family-member").length;
+            let newTotal = currentCount + selectedProfiles.length;
+            
+            if (newTotal > 9) {
+                Swal.fire({icon: 'warning', title: 'Limit Exceeded', text: 'आप (Head) सहित अधिकतम 10 व्यक्ति ही हो सकते हैं।'});
+                return;
+            }
+
+            // Loop to append new rows securely
+            selectedProfiles.forEach((p, idx) => {
+                let rowIdx = currentCount + idx + 1;
+                addFamilyMember(rowIdx); // Ensure this function is globally accessible!
+
+                let memberDiv = $(`.family-member[data-index='${rowIdx}']`);
+                let mobileInput = memberDiv.find('.family-mobile-input')[0];
+                let nameInput   = memberDiv.find('.family-name-field')[0];
+                let fatherInput = memberDiv.find('.family-father-field')[0];
+                
+                $(mobileInput).val(p.mobile_number || headPhone);
+                $(nameInput).val(((p.first_name||'') + ' ' + (p.last_name||'')).trim().toUpperCase());
+                $(fatherInput).val((p.father_name || p.fathers_name || p.guardian_name || '').toUpperCase());
+                fillExtraFields(p, memberDiv[0]); // 📍 Auto-fill extra fields like age, gender, aadhar
+            });
+            
+            $("#no_of_people").val(newTotal);
+            $("#no_of_people").val(newTotal);
+            if (typeof window.updateGenderCount === 'function') window.updateGenderCount();
+            if (typeof window.updatePeopleCount === 'function') window.updatePeopleCount();
+        }
+    });
+}
+
+// ✅ Add single member manually via explicitly provided button
+window.addManualFamilyMember = function() {
+    if (typeof window.addFamilyMember !== 'function') return;
+    let currentCount = $(".family-member").length;
+    if (currentCount >= 9) {
+        Swal.fire({icon: 'warning', title: 'Limit Exceeded', text: 'आप (Head) सहित अधिकतम 10 व्यक्ति ही हो सकते हैं।'});
+        return;
+    }
+    let rowIdx = currentCount + 1;
+    window.addFamilyMember(rowIdx);
+    if (typeof window.updateGenderCount === 'function') window.updateGenderCount();
+    if (typeof window.updatePeopleCount === 'function') window.updatePeopleCount();
+};
+</script>
+
+<script>
 
    
 $(document).ready(function () {
@@ -492,13 +786,21 @@ $(document).ready(function () {
     const aadharRegex = "^[0-9]{12}$"; 
 
     $('input[name="family_coming"]').on('change', function () {
-            if ($(this).val() === '1') {
-                $('#children_count').show();
-            } else {
-                $('#children_count').hide();
-                $('#no_of_children').val(''); // Clear value
-            }
-        });
+        if ($(this).val() === '1') {
+            $('#children_count').show();
+            $('#people_count').show();
+            $('#addMemberButtonsDiv').show();
+            $('#no_of_people').val($(".family-member").length);
+        } else {
+            $('#children_count').hide();
+            $('#people_count').hide();
+            $('#addMemberButtonsDiv').hide();
+            $('#no_of_children').val(''); // Clear value
+            familyMembersSection.html("");
+            if (typeof window.updatePeopleCount === 'function') window.updatePeopleCount();
+            if (typeof window.updateGenderCount === 'function') window.updateGenderCount();
+        }
+    });
 
  //---------Api Backend----------------
             const apiBase = "https://apiv1.sadhumargi.com/api";
@@ -641,23 +943,46 @@ $(document).ready(function () {
   function addFamilyMember(index, data = null) {
     let memberDiv = $(`
         <div class="row border rounded p-2 mb-2 bg-light family-member" data-index="${index}">
+
             <div class="col-md-3 mb-2">
-                <label class="form-label">सदस्य का नाम </label>
+                <label class="form-label fw-semibold">📱 मोबाइल नंबर <span style="color:red">*</span></label>
+                <div class="input-group">
+                    <input type="tel" name="family_members[${index}][mobile]"
+                           class="form-control family-mobile-input"
+                           pattern="^[0-9]{10}$"
+                           maxlength="10"
+                           placeholder="10 अंक दर्ज करें"
+                           oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                           required>
+                    <span class="input-group-text family-member-loader-${index}" style="display:none;">
+                        <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                    </span>
+                </div>
+                <small class="text-muted">नंबर डालने के बाद Tab करें → नाम auto-fill होगा</small>
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <label class="form-label fw-semibold">👤 सदस्य का नाम <span style="color:red">*</span></label>
                 <input type="text" name="family_members[${index}][name]"
-                       class="form-control name-field" required>
+                       class="form-control name-field family-name-field"
+                       placeholder="API से auto-fill या manually लिखें"
+                       required>
             </div>
+
             <div class="col-md-3 mb-2">
-                <label class="form-label">सदस्य के  पिता/ पति का नाम </label>
+                <label class="form-label fw-semibold">👨 पिता/ पति का नाम</label>
                 <input type="text" name="family_members[${index}][father_name]"
-                       class="form-control name-field" required>
+                       class="form-control name-field family-father-field">
             </div>
+
             <div class="col-md-3 mb-2">
-                <label class="form-label">उम्र</label>
+                <label class="form-label fw-semibold">उम्र <span style="color:red">*</span></label>
                 <input type="number" name="family_members[${index}][age]"
                        class="form-control" min="0" required>
             </div>
+
             <div class="col-md-3 mb-2">
-                <label class="form-label">लिंग (Gender) <span style="color:red;">*</span></label>
+                <label class="form-label fw-semibold">लिंग (Gender) <span style="color:red;">*</span></label>
                 <div class="d-flex gap-3">
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="family_members[${index}][gender]" value="male" required>
@@ -669,36 +994,107 @@ $(document).ready(function () {
                     </div>
                 </div>
             </div>
+
             <div class="col-md-3 mb-2">
-                <label class="form-label">मोबाइल नंबर</label>
-                <input type="tel" name="family_members[${index}][mobile]"
-                       class="form-control" pattern="^[0-9]{10}$"
-                       maxlength="10" title="10-अंकों का मोबाइल नंबर" required>
-            </div>
-            <div class="col-md-3 mb-2">
-                <label class="form-label">आधार नंबर </label>
+                <label class="form-label fw-semibold">🪪 आधार नंबर</label>
                 <input type="text" name="family_members[${index}][aadhar_number]"
                        class="form-control aadhar-field" maxlength="12"
-                       pattern="^[0-9]{12}$" title="12-अंकों का आधार नंबर">
+                       pattern="^[0-9]{12}$" placeholder="12 अंकों का आधार"
+                       oninput="this.value=this.value.replace(/[^0-9]/g,'')">
             </div>
+
             <div class="col-md-3 mb-2 d-flex align-items-center">
-                <button type="button" class="btn btn-danger btn-sm remove-member mx-1">✖</button>
+                <button type="button" class="btn btn-danger btn-sm remove-member mx-1">✖ हटाएं</button>
                 <button type="button" class="btn btn-success btn-sm add-member">➕</button>
             </div>
         </div>
     `);
 
-    // Pre-fill data if available
+    // Pre-fill data if available (for cache restore)
     if (data) {
+        memberDiv.find(`[name='family_members[${index}][mobile]']`).val(data.mobile);
         memberDiv.find(`[name='family_members[${index}][name]']`).val(data.name);
         memberDiv.find(`[name='family_members[${index}][father_name]']`).val(data.father_name);
         memberDiv.find(`[name='family_members[${index}][age]']`).val(data.age);
         memberDiv.find(`[name='family_members[${index}][gender]'][value='${data.gender}']`).prop('checked', true);
-        memberDiv.find(`[name='family_members[${index}][mobile]']`).val(data.mobile);
         memberDiv.find(`[name='family_members[${index}][aadhar_number]']`).val(data.aadhar_number);
     }
 
     familyMembersSection.append(memberDiv);
+
+    // ✅ API fetch on mobile input — 10 digits pe instantly trigger
+    const mobileInput = memberDiv.find('.family-mobile-input')[0];
+    const nameInput   = memberDiv.find('.family-name-field')[0];
+    const fatherInput = memberDiv.find('.family-father-field')[0];
+
+    $(mobileInput).on('input', function () {
+        const phone = $(this).val().trim();
+        $(nameInput).val('');
+        $(fatherInput).val('');
+        if (phone.length !== 10) return;
+
+        showApiLoader(); // 🔒 Screen freeze
+
+        $.ajax({
+            url: 'https://apiv1.sadhumargi.com/api/fetch-profiles',
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer vPW6doIdkAdf',
+                'Accept': 'application/json'
+            },
+            data: { mobile_number: phone },
+            success: function (response) {
+                if (response.profiles && response.profiles.length > 0) {
+                    if (response.profiles.length === 1) {
+                        // ✅ Single → direct fill
+                        const p = response.profiles[0];
+                        $(nameInput).val(((p.first_name||'') + ' ' + (p.last_name||'')).trim().toUpperCase());
+                        $(fatherInput).val((p.father_name || p.fathers_name || p.guardian_name || '').toUpperCase());
+                        fillExtraFields(p, memberDiv[0]); // 📍 Auto-fill age, gender, aadhar
+                    } else {
+                        // ✅ Multiple → SweetAlert selection
+                        let optionsHtml = response.profiles.map((p, i) =>
+                            `<option value="${i}">${p.first_name} ${p.last_name} — ${p.father_name || p.fathers_name || ''}</option>`
+                        ).join('');
+                        Swal.fire({
+                            title: 'सदस्य चुनें',
+                            html: `<select id="swal-family-select" class="form-select mt-2">${optionsHtml}</select>`,
+                            confirmButtonText: 'चुनें',
+                            showCancelButton: true,
+                            cancelButtonText: 'रद्द करें',
+                            preConfirm: () => document.getElementById('swal-family-select').value
+                        }).then(result => {
+                            if (result.isConfirmed) {
+                                const p = response.profiles[parseInt(result.value)];
+                                $(nameInput).val(((p.first_name||'') + ' ' + (p.last_name||'')).trim().toUpperCase());
+                                $(fatherInput).val((p.father_name || p.fathers_name || p.guardian_name || '').toUpperCase());
+                                fillExtraFields(p, memberDiv[0]); // 📍 Auto-fill age, gender, aadhar
+                            }
+                        });
+                    }
+                } else {
+                    Swal.fire({
+                        icon: 'info', title: 'प्रोफ़ाइल नहीं मिली',
+                        text: 'इस नंबर से प्रोफ़ाइल नहीं मिली। कृपया नाम manually भरें।',
+                        confirmButtonText: 'ठीक है'
+                    });
+                    $(nameInput).focus();
+                }
+            },
+            error: function () {
+                Swal.fire({
+                    icon: 'warning', title: 'API Error',
+                    text: 'डाटा प्राप्त नहीं हो रहा। कृपया नाम manually भरें।',
+                    confirmButtonText: 'ठीक है'
+                });
+                $(nameInput).focus();
+            },
+            complete: function () {
+                hideApiLoader(); // 🔓 Screen unfreeze
+            }
+        });
+    });
+
     updatePeopleCount();
 }
 
@@ -720,11 +1116,11 @@ $(document).ready(function () {
     // Add new family member
     familyMembersSection.on("click", ".add-member", function () {
         let newIndex = $(".family-member").length + 1;
-        if (newIndex > 10) {
+        if (newIndex > 9) {
             Swal.fire({
                 icon: "warning",
                 title: "Limit Exceeded",
-                text: "You cannot add more than 10 members.",
+                text: "आप (Head) सहित अधिकतम 10 व्यक्ति ही हो सकते हैं।",
             });
             return;
         }
@@ -754,6 +1150,11 @@ $(document).ready(function () {
         $("input[name='total_female']").val(femaleCount);
     }
 
+    // 📍 Expose to global scope for the modal selection
+    window.addFamilyMember = addFamilyMember;
+    window.updatePeopleCount = updatePeopleCount;
+    window.updateGenderCount = updateGenderCount;
+
     // Trigger on head gender change
     $(document).on('change', 'input[name="gender"]', function () {
         updateGenderCount();
@@ -775,11 +1176,11 @@ $(document).ready(function () {
     // Validate the number of people
     noOfPeopleInput.on("blur", function () {
         let count = parseInt($(this).val());
-        if (isNaN(count) || count < 1 || count > 10) {
+        if (isNaN(count) || count < 1 || count > 9) {
             Swal.fire({
                 icon: "error",
                 title: "Invalid Number",
-                text: "Number of people must be between 1 and 10.",
+                text: "सदस्यों की संख्या 1 से 9 के बीच होनी चाहिए। (Head सहित अधिकतम 10 व्यक्ति)",
             });
             $(this).val("");
             familyMembersSection.html("");

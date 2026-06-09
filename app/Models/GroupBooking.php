@@ -34,7 +34,6 @@ class GroupBooking extends Model
         'sixty_plus_members',
         'sixty_plus_male',
         'sixty_plus_female',
-        'sixty_plus_female',
         'booking_id',
         'remark',
     ];

@@ -59,56 +59,53 @@ $report = $bookedRooms->map(function ($room) use ($filters) {
     }
 
     // Determine booking type from booking_id prefix
-    $bookingType = '';
+    $bookingType = $room->booking_type ?? '';
     
-    if (strpos($room->booking_id, 'V-') === 0) {
-        $bookingType = 'vip';
-    } elseif (strpos($room->booking_id, 'F-') === 0) {
-        $bookingType = 'family';
-    } elseif (strpos($room->booking_id, 'G-') === 0) {
-        $bookingType = 'group';
+    if (!$bookingType) {
+        if (strpos($room->booking_id, 'V-') === 0) {
+            $bookingType = 'vip';
+        } elseif (strpos($room->booking_id, 'F-') === 0) {
+            $bookingType = 'family';
+        } elseif (strpos($room->booking_id, 'G-') === 0) {
+            $bookingType = 'group';
+        }
     }
 
-    switch ($bookingType) {
-        case 'vip':
-            $vip = Form::where('booking_id', $room->booking_id)->first();
-            if ($vip) {
-                $name = $vip->name ?? '-';
-                $phone = $vip->phone ?? '-';
-                $totalPersons = $vip->total_persons ?? '1'; // default 1 for vip
-                $checkin = $vip->check_in_date ?? '-';
-                $checkout = $vip->check_out_date ?? '-';
-                $checkinTime = $vip->check_in_time ?? '-';
-                $checkoutTime = $vip->check_out_time ?? '-';
-            }
-            break;
-
-        case 'family':
-            $family = FamilyBooking::where('booking_id', $room->booking_id)->first();
-            if ($family) {
-                $name = $family->name ?? '-';
-                $phone = $family->phone ?? '-';
-                $totalPersons = $family->total_persons ?? '-';
-                $checkin = $family->check_in_date ?? '-';
-                $checkout = $family->check_out_date ?? '-';
-                $checkinTime = $family->check_in_time ?? '-';
-                $checkoutTime = $family->check_out_time ?? '-';
-            }
-            break;
-
-        case 'group':
-            $group = GroupBooking::where('booking_id', $room->booking_id)->first();
-            if ($group) {
-                $name = $group->name ?? '-';
-                $phone = $group->phone ?? '-';
-                $totalPersons = $group->total_persons ?? '-';
-                $checkin = $group->check_in_date ?? '-';
-                $checkout = $group->check_out_date ?? '-';
-                $checkinTime = $group->check_in_time ?? '-';
-                $checkoutTime = $group->check_out_time ?? '-';
-            }
-            break;
+    $model = null;
+    try {
+        if ($bookingType === 'vip') {
+            $model = Form::find($room->booking_id);
+        } elseif ($bookingType === 'family') {
+            $model = FamilyBooking::where('booking_id', $room->booking_id)->first() ?? FamilyBooking::find($room->booking_id);
+        } elseif ($bookingType === 'group') {
+            $model = GroupBooking::where('booking_id', $room->booking_id)->first() ?? GroupBooking::find($room->booking_id);
+        } else {
+            // Fallback guess
+            $model = FamilyBooking::where('booking_id', $room->booking_id)->first()
+                ?? GroupBooking::where('booking_id', $room->booking_id)->first()
+                ?? Form::find($room->booking_id)
+                ?? FamilyBooking::find($room->booking_id)
+                ?? GroupBooking::find($room->booking_id);
+        }
+    } catch (\Exception $e) {
+        // Fallback safely if any column is missing in older tables
     }
+
+    if ($model) {
+        $name = $model->name ?? '-';
+        $phone = $model->phone ?? '-';
+        $totalPersons = $model->total_persons ?? ($model instanceof Form ? '1' : '-');
+        $checkin = $model->check_in_date ?? '-';
+        $checkout = $model->check_out_date ?? '-';
+        $checkinTime = $model->check_in_time ?? '-';
+        $checkoutTime = $model->check_out_time ?? '-';
+    }
+
+    // Fallback to BookedRoom data if still empty
+    if ($phone === '-') $phone = $room->mobile_number ?? '-';
+    if ($totalPersons === '-') $totalPersons = $room->total_capacity ?? '-';
+    if ($checkin === '-') $checkin = $room->check_in_date ?? '-';
+    if ($checkout === '-') $checkout = $room->check_out_date ?? '-';
 
     // Filters
     if (!empty($filters['name']) && stripos($name, $filters['name']) === false) {

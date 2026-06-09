@@ -10,13 +10,27 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class RoomsExportAll implements FromArray, WithHeadings
 {
+    protected $filters;
+
+    public function __construct(array $filters = [])
+    {
+        $this->filters = $filters;
+    }
+
     public function array(): array
     {
         $data = [];
 
-        $hotels = HotelDetails::where('status', 'active')
-            ->with(['roomCategories.category'])
-            ->get();
+        $hotelsQuery = HotelDetails::where('status', 'active')
+            ->with(['roomCategories.category']);
+            
+        if (!empty($this->filters['hotel_id'])) {
+            $hotelsQuery->where('id', $this->filters['hotel_id']);
+        }
+        
+        $hotels = $hotelsQuery->get();
+        $fromDate = $this->filters['from_date'] ?? now()->toDateString();
+        $toDate = $this->filters['to_date'] ?? now()->toDateString();
 
         // Global totals
         $totalRoomsGlobal = 0;
@@ -59,9 +73,21 @@ class RoomsExportAll implements FromArray, WithHeadings
                         continue; // ❌ Skip this room
                     }
 
-                    $booked = BookedRoom::where('hotel_id', $hotel->id)
-                        ->where('room_number', $room)
-                        ->sum('total_capacity');
+                    $bookedQuery = BookedRoom::where('hotel_id', $hotel->id)
+                        ->where('room_number', $room);
+
+                    if ($fromDate && $toDate) {
+                        $bookedQuery->where(function($q) use ($fromDate, $toDate) {
+                            $q->where(function($sq) use ($fromDate, $toDate) {
+                                $sq->whereDate('check_in_date', '<=', $toDate)
+                                   ->whereDate('check_out_date', '>=', $fromDate);
+                            })->orWhere(function($sq) {
+                                $sq->whereNull('check_in_date')->whereNull('check_out_date');
+                            });
+                        });
+                    }
+
+                    $booked = $bookedQuery->sum('total_capacity');
 
                     $available = $category->total_capacity - $booked;
 

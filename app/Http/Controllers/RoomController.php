@@ -15,6 +15,8 @@ use App\Models\GroupBooking;
 use App\Models\Form;
 use App\Exports\RoomsExportAll;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 
 class RoomController extends Controller
@@ -413,9 +415,120 @@ public function updateRoomFeatures(Request $request)
     return Excel::download(new RoomsExport($hotel_id), 'Available_Rooms.xlsx',ExcelFormat::XLSX);
 }
 
-public function exportAll()
+public function exportAll(Request $request)
 {
-    return Excel::download(new RoomsExportAll(), 'Available_Rooms_All_Hotels.xlsx',ExcelFormat::XLSX);
+    return Excel::download(new RoomsExportAll($request->all()), 'Available_Rooms.xlsx', ExcelFormat::XLSX);
 }
 
+    private function getAvailabilityData(Request $request)
+    {
+        $hotelsQuery = HotelDetails::where('status', 'active')
+            ->with(['roomCategories.category']);
+            
+        if ($request->filled('hotel_id')) {
+            $hotelsQuery->where('id', $request->hotel_id);
+        }
+        
+        $hotels = $hotelsQuery->get();
+        $fromDate = $request->input('from_date') ?: now()->toDateString();
+        $toDate = $request->input('to_date') ?: now()->toDateString();
+
+        $data = [];
+        $totals = [
+            'total_rooms' => 0,
+            'total_capacity' => 0,
+            'total_booked' => 0,
+            'total_available' => 0,
+        ];
+
+        foreach ($hotels as $hotel) {
+            $hotelData = [
+                'hotel_name' => $hotel->hotel_name,
+                'rooms' => [],
+                'totals' => [
+                    'rooms_count' => 0,
+                    'total_capacity' => 0,
+                    'total_booked' => 0,
+                    'total_available' => 0,
+                ]
+            ];
+
+            foreach ($hotel->roomCategories as $category) {
+                $roomNumbers = explode(',', $category->room_number);
+
+                foreach ($roomNumbers as $room) {
+                    $room = trim($room);
+
+                    $isActive = RoomFeatures::where('hotel_id', $hotel->id)
+                        ->where('room_number', $room)
+                        ->where('status', 'active')
+                        ->exists();
+
+                    if (!$isActive) {
+                        continue;
+                    }
+
+                    $bookedQuery = BookedRoom::where('hotel_id', $hotel->id)
+                        ->where('room_number', $room);
+
+                    if ($fromDate && $toDate) {
+                        $bookedQuery->where(function($q) use ($fromDate, $toDate) {
+                            $q->where(function($sq) use ($fromDate, $toDate) {
+                                $sq->whereDate('check_in_date', '<=', $toDate)
+                                   ->whereDate('check_out_date', '>=', $fromDate);
+                            })->orWhere(function($sq) {
+                                $sq->whereNull('check_in_date')->whereNull('check_out_date');
+                            });
+                        });
+                    }
+
+                    $booked = $bookedQuery->sum('total_capacity');
+
+                    $available = $category->total_capacity - $booked;
+
+                    $hotelData['rooms'][] = [
+                        'room_no' => $room,
+                        'category' => $category->category->category_name ?? 'N/A',
+                        'floor' => $category->floor,
+                        'beds' => $category->beds ?? 'N/A',
+                        'extra_capacity' => $category->extra_capacity ?? 'N/A',
+                        'total_capacity' => $category->total_capacity,
+                        'booked' => $booked,
+                        'available' => $available,
+                    ];
+
+                    $hotelData['totals']['rooms_count']++;
+                    $hotelData['totals']['total_capacity'] += $category->total_capacity;
+                    $hotelData['totals']['total_booked'] += $booked;
+                    $hotelData['totals']['total_available'] += $available;
+                }
+            }
+
+            if ($hotelData['totals']['rooms_count'] > 0) {
+                $data[] = $hotelData;
+                $totals['total_rooms'] += $hotelData['totals']['rooms_count'];
+                $totals['total_capacity'] += $hotelData['totals']['total_capacity'];
+                $totals['total_booked'] += $hotelData['totals']['total_booked'];
+                $totals['total_available'] += $hotelData['totals']['total_available'];
+            }
+        }
+
+        return compact('data', 'totals');
+    }
+
+    public function dashboard(Request $request)
+    {
+        $availabilityData = $this->getAvailabilityData($request);
+        return view('admin.exports.rooms_dashboard', $availabilityData);
+    }
+
+    public function exportPdfAll(Request $request)
+    {
+        $availabilityData = $this->getAvailabilityData($request);
+        // Custom font support for Devanagari if needed
+        $pdf = Pdf::loadView('admin.exports.rooms_pdf', $availabilityData);
+        $pdf->setPaper('A4', 'landscape');
+        return $pdf->download('Available_Rooms.pdf');
+    }
 }
+

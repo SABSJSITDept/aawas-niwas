@@ -179,7 +179,8 @@ const DB_COLUMNS = [
     { key: 'sixty_plus_female', exportKey: 'sixty_plus_female', label: '60+ Female', defaultVisible: false, filterable: true, type: 'text' },
     { key: 'is_veer_parivar', exportKey: 'is_veer_parivar', label: 'Veer Parivar', defaultVisible: false, filterable: true, type: 'select', options: ['yes', 'no'] },
     { key: 'remark', exportKey: 'remark', label: 'Remark', defaultVisible: false, filterable: true, type: 'text' },
-    { key: 'status', label: 'Status', defaultVisible: true, filterable: false }
+    { key: 'status', label: 'Status', defaultVisible: true, filterable: false },
+    { key: 'action', label: 'Action', defaultVisible: true, filterable: false }
 ];
 
 function initDynamicHeaders() {
@@ -287,6 +288,7 @@ function renderTable(data) {
                 let val = '';
                 if (col.key === 'index') val = ((currentPage - 1) * 25) + i + 1;
                 else if (col.key === 'status') val = `<span class="status-badge status-checkout">Check-out</span>`;
+                else if (col.key === 'action') val = `<button class="btn btn-sm btn-warning text-dark" onclick="moveToPending('${row.type}', ${row.id}, '${row.check_out_date || ''}', '${row.check_out_time || ''}', '${row.total_persons || ''}')" title="Move back to pending"><i class="fas fa-undo"></i> Pending</button>`;
                 else if (col.key === 'booking_id') val = `<strong>${row.display_id || row.id}</strong>`;
                 else if (col.key === 'total_persons') val = `<strong>${row.total_persons ?? '-'}</strong>`;
                 else if (col.key === 'city') val = row.city_name ?? row.city ?? '';
@@ -470,6 +472,109 @@ async function exportCheckoutData(format) {
             text: `Failed to export ${format.toUpperCase()} file. Please try again.`,
             icon: 'error'
         });
+    }
+}
+
+async function moveToPending(type, id, currentCheckOutDate, currentCheckOutTime, currentTotalPersons) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Default the date to at least today
+    let defaultDate = currentCheckOutDate;
+    if (!defaultDate || defaultDate < today) {
+        defaultDate = today;
+    }
+
+    const { value: formValues } = await Swal.fire({
+        title: 'Edit & Bring Back',
+        html: `
+            <div class="mb-3 text-start">
+                <label class="form-label fw-bold">New Check-out Date <span class="text-danger">*</span></label>
+                <input id="swal-co-date" type="date" class="form-control" min="${today}" value="${defaultDate}">
+                <small class="text-muted">Must be today or a future date.</small>
+            </div>
+            <div class="mb-3 text-start">
+                <label class="form-label fw-bold">New Check-out Time</label>
+                <input id="swal-co-time" type="time" class="form-control" value="${currentCheckOutTime || ''}">
+            </div>
+            <div class="mb-3 text-start">
+                <label class="form-label fw-bold">Total Persons <span class="text-danger">*</span></label>
+                <input id="swal-total-persons" type="number" class="form-control" min="1" value="${currentTotalPersons || '1'}">
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonColor: '#f39c12',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Update & Bring Back',
+        preConfirm: () => {
+            const coDate = document.getElementById('swal-co-date').value;
+            const coTime = document.getElementById('swal-co-time').value;
+            const tPersons = document.getElementById('swal-total-persons').value;
+            
+            if (!coDate) {
+                Swal.showValidationMessage('Check-out Date is required');
+                return false;
+            }
+            if (coDate < today) {
+                Swal.showValidationMessage('Check-out Date must be today or later');
+                return false;
+            }
+            if (!tPersons || tPersons < 1) {
+                Swal.showValidationMessage('Total Persons must be at least 1');
+                return false;
+            }
+            
+            return { 
+                check_out_date: coDate, 
+                check_out_time: coTime,
+                total_persons: tPersons
+            };
+        }
+    });
+
+    if (formValues) {
+        try {
+            Swal.fire({
+                title: 'Updating...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            // First update the check-out date
+            const updateRes = await fetch(`/api/registration/${type}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(formValues)
+            });
+            
+            if (!updateRes.ok) {
+                const errorData = await updateRes.json();
+                throw new Error(errorData.message || 'Failed to update entry');
+            }
+
+            // Then change status to pending
+            const statusRes = await fetch(`/api/registration/${type}/${id}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ status: 'pending' })
+            });
+
+            if (statusRes.ok) {
+                Swal.fire('Success', 'Booking updated and moved to pending successfully.', 'success');
+                fetchData();
+            } else {
+                throw new Error('Failed to move');
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', error.message || 'Failed to move to pending', 'error');
+        }
     }
 }
 

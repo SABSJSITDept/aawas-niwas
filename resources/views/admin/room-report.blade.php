@@ -20,7 +20,14 @@
                 <form method="GET" class="row g-3">
                     <div class="col-lg-2 col-md-4 col-sm-6">
                         <label class="form-label text-secondary small mb-2">Hotel Name</label>
-                        <input type="text" name="hotel_name" value="{{ $filters['hotel_name'] ?? '' }}" class="form-control form-control-lg" placeholder="Enter hotel">
+                        <select name="hotel_name" class="form-select form-select-lg">
+                            <option value="">All Hotels</option>
+                            @foreach(\App\Models\HotelDetails::where('status', 'active')->get() as $hotel)
+                                <option value="{{ $hotel->hotel_name }}" {{ ($filters['hotel_name'] ?? '') == $hotel->hotel_name ? 'selected' : '' }}>
+                                    {{ $hotel->hotel_name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6">
                         <label class="form-label text-secondary small mb-2">Room Number</label>

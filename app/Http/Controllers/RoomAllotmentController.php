@@ -80,7 +80,7 @@ public function store(Request $request)
         // booking_id required (string or integer depending on your usage)
         'booking_id' => 'required',
         'check_in_date' => 'required|date',
-        'check_out_date' => 'required|date|after_or_equal:check_in_date',
+        'check_out_date' => 'required|date|after_or_equal:check_in_date|after_or_equal:today',
         'rooms' => 'required|array|min:1',
         'rooms.*.hotel_id' => 'required|integer',
         'rooms.*.room_number' => 'required|string',

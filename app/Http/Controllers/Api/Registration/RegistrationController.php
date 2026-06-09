@@ -303,131 +303,120 @@ class RegistrationController extends Controller
     /**
      * Update either family or group booking
      */
-  /**
- * Update either family or group booking — update all editable fields.
- */
-public function update(Request $request, $type, $id)
-{
-    if ($type === 'family') {
-        // Allowed/editable fields for family (do NOT include booking_id, booking_type, status, created_at, updated_at)
-        $allowed = [
-            'name','father_name','phone','aadhar_number','age','mid','ms_name',
-            'city','state','aanchal','travel_type',
-            'check_in_date','check_in_time','check_out_date','check_out_time',
-            'family_coming','no_of_children','total_persons',
-            'total_male','total_female',
-            'sixty_plus_members','sixty_plus_male','sixty_plus_female',
-            'is_veer_parivar','veer_relation'
-        ];
+    /**
+     * Update either family or group booking — update all editable fields.
+     */
+    public function update(Request $request, $type, $id)
+    {
+        if ($type === 'family') {
+            $allowed = [
+                'name','father_name','phone','aadhar_number','age','mid','ms_name',
+                'city','state','aanchal','travel_type',
+                'check_in_date','check_in_time','check_out_date','check_out_time',
+                'family_coming','no_of_children','total_persons',
+                'total_male','total_female',
+                'sixty_plus_members','sixty_plus_male','sixty_plus_female',
+                'is_veer_parivar','veer_relation'
+            ];
 
-        $rules = [
-            'name' => 'required|string|max:255',
-            'father_name' => 'nullable|string|max:255',
-            'phone' => 'required|string|max:20',
-            'aadhar_number' => "required|string|size:12|unique:family_booking,aadhar_number,{$id}",
-            'age' => 'nullable|integer|min:0|max:120',
-            'mid' => 'nullable|string|max:20',
-            'ms_name' => 'nullable|string|max:255',
-            'city' => 'nullable',
-            'state' => 'nullable',
-            'aanchal' => 'nullable',
-            'travel_type' => 'nullable|string|max:50',
-            'check_in_date' => 'nullable|date',
-            'check_in_time' => 'nullable',
-            'check_out_date' => 'nullable|date|after_or_equal:check_in_date',
-            'check_out_time' => 'nullable',
-            'family_coming' => 'nullable|in:0,1',
-            'no_of_children' => 'nullable|integer|min:0',
-            'total_persons' => 'nullable|integer|min:1',
-            'total_male' => 'nullable|integer|min:0',
-            'total_female' => 'nullable|integer|min:0',
-            'sixty_plus_members' => 'nullable|integer|min:0',
-            'sixty_plus_male' => 'nullable|integer|min:0',
-            'sixty_plus_female' => 'nullable|integer|min:0',
-            'is_veer_parivar' => 'nullable|in:0,1',
-            'veer_relation' => 'nullable|string|max:255',
-        ];
+            $rules = [
+                'name' => 'nullable|string|max:255',
+                'father_name' => 'nullable|string|max:255',
+                'phone' => 'nullable|string|max:20',
+                'aadhar_number' => "nullable|string|size:12|unique:family_booking,aadhar_number,{$id}",
+                'age' => 'nullable|integer|min:0|max:120',
+                'mid' => 'nullable|string|max:20',
+                'ms_name' => 'nullable|string|max:255',
+                'city' => 'nullable',
+                'state' => 'nullable',
+                'aanchal' => 'nullable',
+                'travel_type' => 'nullable|string|max:50',
+                'check_in_date' => 'nullable|date',
+                'check_in_time' => 'nullable',
+                'check_out_date' => 'nullable|date|after_or_equal:check_in_date',
+                'check_out_time' => 'nullable',
+                'family_coming' => 'nullable|in:0,1',
+                'no_of_children' => 'nullable|integer|min:0',
+                'total_persons' => 'nullable|integer|min:1',
+                'total_male' => 'nullable|integer|min:0',
+                'total_female' => 'nullable|integer|min:0',
+                'sixty_plus_members' => 'nullable|integer|min:0',
+                'sixty_plus_male' => 'nullable|integer|min:0',
+                'sixty_plus_female' => 'nullable|integer|min:0',
+                'is_veer_parivar' => 'nullable|in:0,1',
+                'veer_relation' => 'nullable|string|max:255',
+            ];
 
-        $v = Validator::make($request->all(), $rules);
-        if ($v->fails()) return response()->json(['errors' => $v->errors()], 422);
+            $v = Validator::make($request->all(), $rules);
+            if ($v->fails()) return response()->json(['errors' => $v->errors()], 422);
 
-        $booking = FamilyBooking::findOrFail($id);
+            $booking = FamilyBooking::findOrFail($id);
+            $data = array_intersect_key($request->all(), array_flip($allowed));
+            
+            $booking->fill($data);
+            $booking->save();
 
-        // Only pick allowed fields — prevents accidental updates to protected columns
-        $data = array_intersect_key($request->all(), array_flip($allowed));
-
-        // Optional: if total_persons missing but total_male/total_female present, you might compute it,
-        // but we'll trust the frontend value. If you want auto-calculation uncomment below:
-        // if (!isset($data['total_persons']) && (isset($data['total_male']) || isset($data['total_female']))) {
-        //     $data['total_persons'] = ($data['total_male'] ?? $booking->total_male ?? 0) + ($data['total_female'] ?? $booking->total_female ?? 0) + 1; // if you want +1 logic
-        // }
-
-        $booking->fill($data);
-        $booking->save();
-
-        return response()->json(['success' => true, 'booking' => $booking]);
-    }
-
-    if ($type === 'group') {
-        // Allowed/editable fields for group
-        $allowed = [
-            'name','father_name','phone','aadhar_number','mid',
-            'city','state','aanchal','travel_type',
-            'check_in_date','check_in_time','check_out_date','check_out_time',
-            'total_persons','total_members','total_male','total_female',
-            'sixty_plus_members','sixty_plus_male','sixty_plus_female',
-            'status' /* note: keep status out if you want it only changeable via changeStatus(); remove if you do not want status updated here */
-        ];
-
-        // If you want status to be only changed via changeStatus(), remove 'status' from $allowed and rules below.
-        // Here I will exclude 'status' from rules/allowed to match earlier UX decision:
-        $allowed = array_diff($allowed, ['status']);
-
-        $rules = [
-            'name' => 'required|string|max:255',
-            'father_name' => 'nullable|string|max:255',
-            'phone' => 'required|string|max:20',
-            'aadhar_number' => "required|string|size:12|unique:group_bookings,aadhar_number,{$id}",
-            'mid' => 'nullable|string|max:20',
-            'city' => 'nullable',
-            'state' => 'nullable',
-            'aanchal' => 'nullable',
-            'travel_type' => 'nullable|string|max:50',
-            'check_in_date' => 'nullable|date',
-            'check_in_time' => 'nullable',
-            'check_out_date' => 'nullable|date|after_or_equal:check_in_date',
-            'check_out_time' => 'nullable',
-            'total_persons' => 'nullable|integer|min:1',
-            'total_members' => 'nullable|integer|min:0',
-            'total_male' => 'nullable|integer|min:0',
-            'total_female' => 'nullable|integer|min:0',
-            'sixty_plus_members' => 'nullable|integer|min:0',
-            'sixty_plus_male' => 'nullable|integer|min:0',
-            'sixty_plus_female' => 'nullable|integer|min:0',
-        ];
-
-        $v = Validator::make($request->all(), $rules);
-        if ($v->fails()) return response()->json(['errors' => $v->errors()], 422);
-
-        $booking = GroupBooking::findOrFail($id);
-
-        $data = array_intersect_key($request->all(), array_flip($allowed));
-
-        // If frontend removed total_members and uses total_persons only, ensure total_persons saved.
-        // You might also want to keep total_members in sync: optionally compute total_members = total_persons - 1
-        if (!isset($data['total_members']) && isset($data['total_persons'])) {
-            // if your business rule is total_members = total_persons - 1 (head + members), enable this:
-            // $data['total_members'] = max(0, (int)$data['total_persons'] - 1);
+            return response()->json(['success' => true, 'booking' => $booking]);
         }
 
-        $booking->fill($data);
-        $booking->save();
+        if ($type === 'group') {
+            $allowed = [
+                'name','father_name','phone','aadhar_number','mid',
+                'city','state','aanchal','travel_type',
+                'check_in_date','check_in_time','check_out_date','check_out_time',
+                'total_persons','total_members','total_male','total_female',
+                'sixty_plus_members','sixty_plus_male','sixty_plus_female','child_count'
+            ];
 
-        return response()->json(['success' => true, 'booking' => $booking]);
+            $rules = [
+                'name' => 'nullable|string|max:255',
+                'father_name' => 'nullable|string|max:255',
+                'phone' => 'nullable|string|max:20',
+                'aadhar_number' => "nullable|string|size:12|unique:group_bookings,aadhar_number,{$id}",
+                'mid' => 'nullable|string|max:20',
+                'city' => 'nullable',
+                'state' => 'nullable',
+                'aanchal' => 'nullable',
+                'travel_type' => 'nullable|string|max:50',
+                'check_in_date' => 'nullable|date',
+                'check_in_time' => 'nullable',
+                'check_out_date' => 'nullable|date|after_or_equal:check_in_date',
+                'check_out_time' => 'nullable',
+                'total_persons' => 'nullable|integer|min:1',
+                'total_members' => 'nullable|integer|min:0',
+                'total_male' => 'nullable|integer|min:0',
+                'total_female' => 'nullable|integer|min:0',
+                'sixty_plus_members' => 'nullable|integer|min:0',
+                'sixty_plus_male' => 'nullable|integer|min:0',
+                'sixty_plus_female' => 'nullable|integer|min:0',
+                'no_of_children' => 'nullable|integer|min:0',
+            ];
+
+            $v = Validator::make($request->all(), $rules);
+            if ($v->fails()) return response()->json(['errors' => $v->errors()], 422);
+
+            $booking = GroupBooking::findOrFail($id);
+
+            // Handle mapping of no_of_children from form to child_count in group_bookings table
+            $allData = $request->all();
+            if (array_key_exists('no_of_children', $allData)) {
+                $allData['child_count'] = $allData['no_of_children'];
+            }
+
+            $data = array_intersect_key($allData, array_flip($allowed));
+
+            if (!isset($data['total_members']) && isset($data['total_persons'])) {
+                // $data['total_members'] = max(0, (int)$data['total_persons'] - 1);
+            }
+
+            $booking->fill($data);
+            $booking->save();
+
+            return response()->json(['success' => true, 'booking' => $booking]);
+        }
+
+        return response()->json(['error' => 'Invalid type'], 400);
     }
-
-    return response()->json(['error' => 'Invalid type'], 400);
-}
 
 
     /**
@@ -476,6 +465,69 @@ public function update(Request $request, $type, $id)
         }
 
         return response()->json(['error' => 'Invalid type'], 400);
+    }
+
+    /**
+     * Clear room allocation for a given booking and change status back to pending
+     */
+    public function clearRoom(Request $request, $type, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $bookingModel = null;
+            if ($type === 'family') {
+                $bookingModel = \App\Models\FamilyBooking::find($id);
+            } elseif ($type === 'group') {
+                $bookingModel = \App\Models\GroupBooking::find($id);
+            } elseif ($type === 'vip') {
+                $bookingModel = \App\Models\Form::find($id);
+            }
+
+            if (!$bookingModel) {
+                return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
+            }
+
+            $displayBookingId = $bookingModel->booking_id ?? $id;
+
+            // Get all rooms booked by this booking
+            $bookedRooms = \App\Models\BookedRoom::where('booking_id', $displayBookingId)->get();
+
+            foreach ($bookedRooms as $bookedRoom) {
+                // Restore capacity in RoomStatus
+                $status = \App\Models\RoomStatus::where('hotel_id', $bookedRoom->hotel_id)
+                    ->where('room_number', $bookedRoom->room_number)
+                    ->first();
+                if ($status) {
+                    $status->available_capacity += $bookedRoom->total_capacity;
+                    $status->status = $status->available_capacity <= 0 ? 'Full' : 'Partial';
+                    $status->save();
+                }
+                $bookedRoom->delete();
+            }
+
+            // Also delete by pure ID just in case
+            \App\Models\BookedRoom::where('booking_id', $id)->delete();
+
+            // Revert status to pending
+            $bookingModel->status = 'pending';
+            $bookingModel->save();
+
+            if ($bookingModel instanceof \App\Models\FamilyBooking) {
+                \App\Models\FamilyMember::where('family_id', $bookingModel->id)->update(['status' => 'pending']);
+            } elseif ($bookingModel instanceof \App\Models\GroupBooking) {
+                \App\Models\GroupMember::where('group_booking_id', $bookingModel->id)->update(['status' => 'pending']);
+            }
+
+            DB::commit();
+
+            return response()->json(['success' => true]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Clear room error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Unable to clear room allocation.'], 500);
+        }
     }
 
       private function getMergedDataForExport(Request $request)
@@ -689,16 +741,153 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
         $families = $familyQuery->orderByDesc('id')->get()->map(function($b) {
             $arr = $b->toArray();
             $arr['type'] = 'family';
-            $arr['display_id'] = 'F-' . ($b->id + 100);
+            $display_id = !empty($b->booking_id) ? $b->booking_id : 'F-' . ($b->id + 100);
+            $arr['display_id'] = $display_id;
             $arr['total_persons'] = $b->total_persons ?? ($b->total_members ?? null);
+            
+            $arr['city'] = $b->cityName?->city_name ?? ($b->city ?? '');
+            $arr['state'] = $b->stateName?->state_name ?? ($b->state ?? '');
+            $arr['aanchal'] = $b->aanchalName?->name ?? ($b->aanchal ?? '');
+            unset($arr['city_name'], $arr['state_name'], $arr['aanchal_name']);
+
+            $rooms = \App\Models\BookedRoom::with('hotel')->where('booking_id', $display_id)->orWhere('booking_id', $b->id)->get();
+            if ($rooms->isNotEmpty()) {
+                $grouped = [];
+                foreach($rooms as $rm) {
+                    $hotelName = $rm->hotel?->hotel_name ?? 'Unknown Hotel';
+                    $grouped[$hotelName][] = $rm->room_number;
+                }
+                $allotmentParts = [];
+                foreach($grouped as $hName => $rNums) {
+                    $allotmentParts[] = $hName . ' (' . implode(', ', $rNums) . ')';
+                }
+                $arr['allotment_info'] = implode(' | ', $allotmentParts);
+            } else {
+                $arr['allotment_info'] = 'Not Allotted';
+            }
+
             return $arr;
         })->values()->toBase();
 
         $groups = $groupQuery->orderByDesc('id')->get()->map(function($b) {
             $arr = $b->toArray();
             $arr['type'] = 'group';
-            $arr['display_id'] = 'G-' . ($b->id + 100);
+            $display_id = !empty($b->booking_id) ? $b->booking_id : 'G-' . ($b->id + 100);
+            $arr['display_id'] = $display_id;
             $arr['total_persons'] = $b->total_persons ?? ($b->total_members ?? null);
+            
+            $arr['city'] = $b->cityName?->city_name ?? ($b->city ?? '');
+            $arr['state'] = $b->stateName?->state_name ?? ($b->state ?? '');
+            $arr['aanchal'] = $b->aanchalName?->name ?? ($b->aanchal ?? '');
+            unset($arr['city_name'], $arr['state_name'], $arr['aanchal_name']);
+
+            $rooms = \App\Models\BookedRoom::with('hotel')->where('booking_id', $display_id)->orWhere('booking_id', $b->id)->get();
+            if ($rooms->isNotEmpty()) {
+                $grouped = [];
+                foreach($rooms as $rm) {
+                    $hotelName = $rm->hotel?->hotel_name ?? 'Unknown Hotel';
+                    $grouped[$hotelName][] = $rm->room_number;
+                }
+                $allotmentParts = [];
+                foreach($grouped as $hName => $rNums) {
+                    $allotmentParts[] = $hName . ' (' . implode(', ', $rNums) . ')';
+                }
+                $arr['allotment_info'] = implode(' | ', $allotmentParts);
+            } else {
+                $arr['allotment_info'] = 'Not Allotted';
+            }
+
+            return $arr;
+        })->values()->toBase();
+
+        $merged = $families->merge($groups)
+            ->sortByDesc(function($item){
+                return ($item['type'] === 'family' ? (1000 + (int)$item['id']) : (2000 + (int)$item['id']));
+            })->values();
+
+        $perPage = (int) $request->get('per_page', 25);
+        $page = max(1, (int) $request->get('page', 1));
+        
+        $total = $merged->count();
+        $sliced = $merged->slice(($page - 1) * $perPage, $perPage)->values();
+
+        return response()->json([
+            'data' => $sliced,
+            'meta' => [
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $page,
+                'last_page' => (int) ceil($total / max(1, $perPage)) ?: 1,
+            ]
+        ]);
+    }
+
+    public function allList(Request $request)
+    {
+        $familyQuery = FamilyBooking::with(['cityName', 'stateName', 'aanchalName']);
+        $groupQuery = GroupBooking::with(['cityName', 'stateName', 'aanchalName']);
+
+        $this->applyDynamicFilters($familyQuery, $groupQuery, $request);
+
+        $families = $familyQuery->orderByDesc('id')->get()->map(function($b) {
+            $arr = $b->toArray();
+            $arr['type'] = 'family';
+            $display_id = !empty($b->booking_id) ? $b->booking_id : 'F-' . ($b->id + 100);
+            $arr['display_id'] = $display_id;
+            $arr['total_persons'] = $b->total_persons ?? ($b->total_members ?? null);
+            
+            $arr['city'] = $b->cityName?->city_name ?? ($b->city ?? '');
+            $arr['state'] = $b->stateName?->state_name ?? ($b->state ?? '');
+            $arr['aanchal'] = $b->aanchalName?->name ?? ($b->aanchal ?? '');
+            unset($arr['city_name'], $arr['state_name'], $arr['aanchal_name']);
+
+            $rooms = \App\Models\BookedRoom::with('hotel')->where('booking_id', $display_id)->orWhere('booking_id', $b->id)->get();
+            if ($rooms->isNotEmpty()) {
+                $grouped = [];
+                foreach($rooms as $rm) {
+                    $hotelName = $rm->hotel?->hotel_name ?? 'Unknown Hotel';
+                    $grouped[$hotelName][] = $rm->room_number;
+                }
+                $allotmentParts = [];
+                foreach($grouped as $hName => $rNums) {
+                    $allotmentParts[] = $hName . ' (' . implode(', ', $rNums) . ')';
+                }
+                $arr['allotment_info'] = implode(' | ', $allotmentParts);
+            } else {
+                $arr['allotment_info'] = 'Not Allotted';
+            }
+
+            return $arr;
+        })->values()->toBase();
+
+        $groups = $groupQuery->orderByDesc('id')->get()->map(function($b) {
+            $arr = $b->toArray();
+            $arr['type'] = 'group';
+            $display_id = !empty($b->booking_id) ? $b->booking_id : 'G-' . ($b->id + 100);
+            $arr['display_id'] = $display_id;
+            $arr['total_persons'] = $b->total_persons ?? ($b->total_members ?? null);
+            
+            $arr['city'] = $b->cityName?->city_name ?? ($b->city ?? '');
+            $arr['state'] = $b->stateName?->state_name ?? ($b->state ?? '');
+            $arr['aanchal'] = $b->aanchalName?->name ?? ($b->aanchal ?? '');
+            unset($arr['city_name'], $arr['state_name'], $arr['aanchal_name']);
+
+            $rooms = \App\Models\BookedRoom::with('hotel')->where('booking_id', $display_id)->orWhere('booking_id', $b->id)->get();
+            if ($rooms->isNotEmpty()) {
+                $grouped = [];
+                foreach($rooms as $rm) {
+                    $hotelName = $rm->hotel?->hotel_name ?? 'Unknown Hotel';
+                    $grouped[$hotelName][] = $rm->room_number;
+                }
+                $allotmentParts = [];
+                foreach($grouped as $hName => $rNums) {
+                    $allotmentParts[] = $hName . ' (' . implode(', ', $rNums) . ')';
+                }
+                $arr['allotment_info'] = implode(' | ', $allotmentParts);
+            } else {
+                $arr['allotment_info'] = 'Not Allotted';
+            }
+
             return $arr;
         })->values()->toBase();
 
@@ -747,20 +936,56 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
             $families = $familyQuery->orderByDesc('id')->get()->map(function($b) {
                 $arr = $b->toArray();
                 $arr['type'] = 'family';
-                $arr['booking_id'] = 'F-' . ($b->id + 100);
+                $display_id = !empty($b->booking_id) ? $b->booking_id : 'F-' . ($b->id + 100);
+                $arr['booking_id'] = $display_id;
                 $arr['city'] = $b->cityName->city_name ?? 'N/A';
                 $arr['state'] = $b->stateName->state_name ?? 'N/A';
                 $arr['aanchal'] = $b->aanchalName->name ?? 'N/A';
+
+                $rooms = \App\Models\BookedRoom::with('hotel')->where('booking_id', $display_id)->orWhere('booking_id', $b->id)->get();
+                if ($rooms->isNotEmpty()) {
+                    $grouped = [];
+                    foreach($rooms as $rm) {
+                        $hotelName = $rm->hotel?->hotel_name ?? 'Unknown Hotel';
+                        $grouped[$hotelName][] = $rm->room_number;
+                    }
+                    $allotmentParts = [];
+                    foreach($grouped as $hName => $rNums) {
+                        $allotmentParts[] = $hName . ' (' . implode(', ', $rNums) . ')';
+                    }
+                    $arr['allotment_info'] = implode(' | ', $allotmentParts);
+                } else {
+                    $arr['allotment_info'] = 'Not Allotted';
+                }
+                
                 return $arr;
             })->values()->toBase();
 
             $groups = $groupQuery->orderByDesc('id')->get()->map(function($b) {
                 $arr = $b->toArray();
                 $arr['type'] = 'group';
-                $arr['booking_id'] = 'G-' . ($b->id + 100);
+                $display_id = !empty($b->booking_id) ? $b->booking_id : 'G-' . ($b->id + 100);
+                $arr['booking_id'] = $display_id;
                 $arr['city'] = $b->cityName->city_name ?? 'N/A';
                 $arr['state'] = $b->stateName->state_name ?? 'N/A';
                 $arr['aanchal'] = $b->aanchalName->name ?? 'N/A';
+
+                $rooms = \App\Models\BookedRoom::with('hotel')->where('booking_id', $display_id)->orWhere('booking_id', $b->id)->get();
+                if ($rooms->isNotEmpty()) {
+                    $grouped = [];
+                    foreach($rooms as $rm) {
+                        $hotelName = $rm->hotel?->hotel_name ?? 'Unknown Hotel';
+                        $grouped[$hotelName][] = $rm->room_number;
+                    }
+                    $allotmentParts = [];
+                    foreach($grouped as $hName => $rNums) {
+                        $allotmentParts[] = $hName . ' (' . implode(', ', $rNums) . ')';
+                    }
+                    $arr['allotment_info'] = implode(' | ', $allotmentParts);
+                } else {
+                    $arr['allotment_info'] = 'Not Allotted';
+                }
+
                 return $arr;
             })->values()->toBase();
 
@@ -778,11 +1003,14 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                 'mid' => 'MID',                
                 'city' => 'City',
                 'state' => 'State',
+                'city_state' => 'City & State',
                 'aanchal' => 'Aanchal',
                 'travel_type' => 'Travel Type',
                 'check_in_date' => 'Check-in Date',
                 'check_out_date' => 'Check-out Date',
-                'total_persons' => 'Total Persons'
+                'check_in_out' => 'Check In/Out',
+                'total_persons' => 'Total Persons',
+                'allotment_info' => 'Allotment Info'
             ];
 
             if (empty($visibleColumnsKeys) || !is_array($visibleColumnsKeys)) {
@@ -798,6 +1026,18 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
 
             // Prepare flat rows for export - only required columns
             $rows = $data->map(function($row) use ($visibleColumnsKeys) {
+                $c = $row['city'] ?? '';
+                $s = $row['state'] ?? '';
+                $cityState = ($c && $s) ? "$c, $s" : ($c ?: ($s ?: ''));
+                
+                $ciDate = $row['check_in_date'] ?? '';
+                $ciTime = $row['check_in_time'] ?? '';
+                $coDate = $row['check_out_date'] ?? '';
+                $coTime = $row['check_out_time'] ?? '';
+                $ci = $ciDate . ($ciTime ? ' ' . $ciTime : '');
+                $co = $coDate . ($coTime ? ' ' . $coTime : '');
+                $checkInOut = "In: $ci\nOut: $co";
+
                 $fullRow = [
                     'type' => $row['type'] ?? '',
                     'booking_id' => $row['booking_id'] ?? '',
@@ -809,11 +1049,14 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                     'mid' => $row['mid'] ?? '',                    
                     'city' => $row['city'] ?? '',
                     'state' => $row['state'] ?? '',
+                    'city_state' => $cityState,
                     'aanchal' => $row['aanchal'] ?? '',
                     'travel_type' => $row['travel_type'] ?? '',
                     'check_in_date' => $row['check_in_date'] ?? '',
                     'check_out_date' => $row['check_out_date'] ?? '',
-                    'total_persons' => $row['total_persons'] ?? ''
+                    'check_in_out' => $checkInOut,
+                    'total_persons' => $row['total_persons'] ?? '',
+                    'allotment_info' => $row['allotment_info'] ?? ''
                 ];
                 
                 $filteredRow = [];
@@ -1261,6 +1504,187 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
     /**
      * Automatically check out bookings based on predefined time slots
      */
+
+    public function allExport(Request $request)
+    {
+        try {
+            $format = strtolower($request->get('format', 'excel'));
+            Log::info('All registration export started', ['format' => $format]);
+            
+            $familyQuery = FamilyBooking::with(['cityName', 'stateName', 'aanchalName']);
+            $groupQuery = GroupBooking::with(['cityName', 'stateName', 'aanchalName']);
+
+            $this->applyDynamicFilters($familyQuery, $groupQuery, $request);
+
+            $families = $familyQuery->orderByDesc('id')->get()->map(function($b) {
+                $arr = $b->toArray();
+                $arr['type'] = 'family';
+                $display_id = !empty($b->booking_id) ? $b->booking_id : 'F-' . ($b->id + 100);
+                $arr['booking_id'] = $display_id;
+                $arr['city'] = $b->cityName->city_name ?? 'N/A';
+                $arr['state'] = $b->stateName->state_name ?? 'N/A';
+                $arr['aanchal'] = $b->aanchalName->name ?? 'N/A';
+
+                $rooms = \App\Models\BookedRoom::with('hotel')->where('booking_id', $display_id)->orWhere('booking_id', $b->id)->get();
+                if ($rooms->isNotEmpty()) {
+                    $grouped = [];
+                    foreach($rooms as $rm) {
+                        $hotelName = $rm->hotel?->hotel_name ?? 'Unknown Hotel';
+                        $grouped[$hotelName][] = $rm->room_number;
+                    }
+                    $allotmentParts = [];
+                    foreach($grouped as $hName => $rNums) {
+                        $allotmentParts[] = $hName . ' (' . implode(', ', $rNums) . ')';
+                    }
+                    $arr['allotment_info'] = implode(' | ', $allotmentParts);
+                } else {
+                    $arr['allotment_info'] = 'Not Allotted';
+                }
+                
+                return $arr;
+            })->values()->toBase();
+
+            $groups = $groupQuery->orderByDesc('id')->get()->map(function($b) {
+                $arr = $b->toArray();
+                $arr['type'] = 'group';
+                $display_id = !empty($b->booking_id) ? $b->booking_id : 'G-' . ($b->id + 100);
+                $arr['booking_id'] = $display_id;
+                $arr['city'] = $b->cityName->city_name ?? 'N/A';
+                $arr['state'] = $b->stateName->state_name ?? 'N/A';
+                $arr['aanchal'] = $b->aanchalName->name ?? 'N/A';
+
+                $rooms = \App\Models\BookedRoom::with('hotel')->where('booking_id', $display_id)->orWhere('booking_id', $b->id)->get();
+                if ($rooms->isNotEmpty()) {
+                    $grouped = [];
+                    foreach($rooms as $rm) {
+                        $hotelName = $rm->hotel?->hotel_name ?? 'Unknown Hotel';
+                        $grouped[$hotelName][] = $rm->room_number;
+                    }
+                    $allotmentParts = [];
+                    foreach($grouped as $hName => $rNums) {
+                        $allotmentParts[] = $hName . ' (' . implode(', ', $rNums) . ')';
+                    }
+                    $arr['allotment_info'] = implode(' | ', $allotmentParts);
+                } else {
+                    $arr['allotment_info'] = 'Not Allotted';
+                }
+                
+                return $arr;
+            })->values()->toBase();
+
+            $merged = $families->merge($groups)
+                ->sortByDesc(function($item){
+                    return ($item['type'] === 'family' ? (1000 + (int)$item['id']) : (2000 + (int)$item['id']));
+                })->values();
+
+            $visibleColumnsKeys = $request->get('visible_columns');
+            $allColumnsMap = [
+                'type' => 'Type',
+                'booking_id' => 'Booking ID',
+                'status' => 'Status',
+                'name' => 'Name',
+                'father_name' => 'Father Name',
+                'phone' => 'Phone',
+                'aadhar_number' => 'Aadhar Number',
+                'age' => 'Age',
+                'mid' => 'MID',                
+                'city' => 'City',
+                'state' => 'State',
+                'aanchal' => 'Aanchal',
+                'travel_type' => 'Travel Type',
+                'check_in_date' => 'Check-in Date',
+                'check_in_time' => 'Check-in Time',
+                'check_out_date' => 'Check-out Date',
+                'check_out_time' => 'Check-out Time',
+                'total_persons' => 'Total Persons',
+                'allotment_info' => 'Allotment Info'
+            ];
+
+            if (empty($visibleColumnsKeys) || !is_array($visibleColumnsKeys)) {
+                $visibleColumnsKeys = array_keys($allColumnsMap);
+            }
+
+            $exportHeadings = [];
+            foreach ($visibleColumnsKeys as $key) {
+                if (isset($allColumnsMap[$key])) {
+                    $exportHeadings[] = $allColumnsMap[$key];
+                }
+            }
+
+            $rows = $merged->map(function($row) use ($visibleColumnsKeys) {
+                $ensureUtf8 = function($value) {
+                    if (!is_string($value)) return $value;
+                    if (!mb_check_encoding($value, 'UTF-8')) {
+                        $value = mb_convert_encoding($value, 'UTF-8', 'auto');
+                    }
+                    return $value;
+                };
+                
+                $fullRow = [
+                    'type' => $ensureUtf8($row['type'] ?? ''),
+                    'booking_id' => $ensureUtf8($row['booking_id'] ?? ''),
+                    'status' => $ensureUtf8(strtoupper($row['status'] ?? 'PENDING')),
+                    'name' => $ensureUtf8($row['name'] ?? ''),
+                    'father_name' => $ensureUtf8($row['father_name'] ?? ''),
+                    'phone' => $ensureUtf8($row['phone'] ?? ''),
+                    'aadhar_number' => $ensureUtf8($row['aadhar_number'] ?? ''),
+                    'age' => $ensureUtf8($row['age'] ?? ''),
+                    'mid' => $ensureUtf8($row['mid'] ?? ''),                
+                    'city' => $ensureUtf8($row['city'] ?? ''),
+                    'state' => $ensureUtf8($row['state'] ?? ''),
+                    'aanchal' => $ensureUtf8($row['aanchal'] ?? ''),
+                    'travel_type' => $ensureUtf8($row['travel_type'] ?? ''),
+                    'check_in_date' => $ensureUtf8($row['check_in_date'] ?? ''),
+                    'check_in_time' => $ensureUtf8($row['check_in_time'] ?? ''),
+                    'check_out_date' => $ensureUtf8($row['check_out_date'] ?? ''),
+                    'check_out_time' => $ensureUtf8($row['check_out_time'] ?? ''),
+                    'total_persons' => $ensureUtf8($row['total_persons'] ?? ''),
+                    'allotment_info' => $ensureUtf8($row['allotment_info'] ?? '')
+                ];
+
+                $filteredRow = [];
+                foreach ($visibleColumnsKeys as $key) {
+                    if (isset($fullRow[$key])) {
+                        $filteredRow[$key] = $fullRow[$key];
+                    }
+                }
+                return $filteredRow;
+            })->toArray();
+
+            if ($format === 'excel') {
+                $filename = 'all-registrations-' . now()->format('Ymd-His') . '.xlsx';
+                $export = new RegistrationExport($rows, $exportHeadings);
+                return Excel::download($export, $filename, \Maatwebsite\Excel\Excel::XLSX);
+            }
+
+            try {
+                $pdfData = $rows;
+                $htmlTable = $this->generateStyledTableHtml($pdfData);
+                $imagePath = $this->convertHtmlTableToImage($htmlTable);
+                $pdf = Pdf::loadView('exports.registrations_pdf_image', compact('imagePath'));
+                $filename = 'all-registrations-' . now()->format('Ymd-His') . '.pdf';
+                return $pdf->download($filename);
+            } catch (\Exception $imageError) {
+                $pdfData = $rows;
+                $pdf = Pdf::loadView('exports.registrations_pdf', compact('pdfData'));
+                $pdf->setOptions([
+                    'defaultFont' => 'dejavusans',
+                    'dpi' => 96,
+                    'enable_font_subsetting' => false,
+                    'enable_css_float' => true,
+                    'enable_php' => false,
+                    'enable_remote' => false,
+                ]);
+                $filename = 'all-registrations-' . now()->format('Ymd-His') . '.pdf';
+                return $pdf->download($filename);
+            }
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Export failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
     /**
      * Generate styled HTML table from registration data

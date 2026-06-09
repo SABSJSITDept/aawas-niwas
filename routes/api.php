@@ -9,6 +9,13 @@ use App\Http\Controllers\Api\SadhuSadviController;
 
 
 
+use App\Http\Controllers\Api\AppBookingController;
+
+Route::prefix('app-booking')->group(function() {
+    Route::post('family', [AppBookingController::class, 'storeFamilyBooking']);
+    Route::post('group', [AppBookingController::class, 'storeGroupBooking']);
+});
+
 Route::prefix('dashboard-report')->group(function () {
     Route::get('summary', [ReportController::class, 'summary']);
     Route::get('today-check-in', [ReportController::class, 'todayCheckIn']);
@@ -30,10 +37,13 @@ Route::prefix('registration')->group(function() {
     Route::delete('{type}/{id}', [RegistrationController::class, 'destroy']);     // delete booking + members
     Route::post('{type}/{id}/status', [RegistrationController::class, 'changeStatus']); // change status (approve/reject/checkout)
     Route::post('{type}/{id}/checkout', [RegistrationController::class, 'checkout']);
+    Route::post('{type}/{id}/clear-room', [RegistrationController::class, 'clearRoom']);
 });
 
 Route::get('/registration/completed-list', [\App\Http\Controllers\Api\Registration\RegistrationController::class, 'completedList']);
 Route::get('/registration/completed-export', [\App\Http\Controllers\Api\Registration\RegistrationController::class, 'completedExport']);
+Route::get('/registration/all-list', [\App\Http\Controllers\Api\Registration\RegistrationController::class, 'allList']);
+Route::get('/registration/all-export', [\App\Http\Controllers\Api\Registration\RegistrationController::class, 'allExport']);
 Route::get('/registration/rejected-export', [\App\Http\Controllers\Api\Registration\RegistrationController::class, 'rejectedExport']);
 Route::get('/registration/checkout-export', [\App\Http\Controllers\Api\Registration\RegistrationController::class, 'checkoutExport']);
 Route::get('/registration/checkout-list', [\App\Http\Controllers\Api\Registration\RegistrationController::class, 'checkoutList']);

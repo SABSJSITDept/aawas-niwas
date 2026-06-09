@@ -390,12 +390,12 @@
                             $room = trim($room);
                             if ($room === '') continue;
 
-                            $featureActive = \App\Models\RoomFeatures::where('hotel_id', $category->hotel_id)
+                            $feature = \App\Models\RoomFeatures::where('hotel_id', $category->hotel_id)
                                 ->where('room_number', $room)
                                 ->where('status', 'active')
-                                ->exists();
+                                ->first();
 
-                            if (!$featureActive) continue;
+                            if (!$feature) continue;
 
                             $currentBookings = \App\Models\BookedRoom::where('hotel_id', $category->hotel_id)
                                         ->where('room_number', $room)
@@ -501,6 +501,10 @@
                                     <div style="font-size: 12px; font-weight: 700; color: inherit; text-align: center; line-height: 1;">{{ $room }}</div>
                                     <div style="font-size: 9px; opacity: 0.8; text-align: center; line-height: 1;">
                                         {{ $available }}/{{ $category->total_capacity }}
+                                    </div>
+                                    <div style="font-size: 8px; font-weight: 600; opacity: 0.9; text-align: center; margin-top: 3px; line-height: 1.2;">
+                                        {{ ($feature->ac == 'AC' || $feature->ac == '1') ? 'AC' : 'Non-AC' }} &bull; {{ ($feature->attach_bath == 'Yes' || $feature->attach_bath == '1') ? 'Att.' : 'Comm.' }} <br>
+                                        {{ ucfirst($feature->toilet_type ?? 'Indian') }}
                                     </div>
                                 </div>
                             </div>

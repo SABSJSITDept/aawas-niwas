@@ -159,20 +159,15 @@ const DB_COLUMNS = [
     { key: 'name', exportKey: 'name', label: 'Name', defaultVisible: true, filterable: true, type: 'text' },
     { key: 'father_name', exportKey: 'father_name', label: 'Father Name', defaultVisible: false, filterable: true, type: 'text' },
     { key: 'phone', exportKey: 'phone', label: 'Phone', defaultVisible: true, filterable: true, type: 'text' },
-    { key: 'type', exportKey: 'type', label: 'Type', defaultVisible: true, filterable: true, type: 'select', options: ['family', 'group'] },
     { key: 'aadhar_number', exportKey: 'aadhar_number', label: 'Aadhar', defaultVisible: false, filterable: true, type: 'text' },
     { key: 'age', exportKey: 'age', label: 'Age', defaultVisible: false, filterable: true, type: 'text' },
     { key: 'gender', exportKey: 'gender', label: 'Gender', defaultVisible: false, filterable: true, type: 'select', options: ['Male', 'Female'] },
     { key: 'ms_name', exportKey: 'ms_name', label: 'MS Name', defaultVisible: false, filterable: true, type: 'text' },
     { key: 'mid', exportKey: 'mid', label: 'MID', defaultVisible: false, filterable: true, type: 'text' },
-    { key: 'city', exportKey: 'city', label: 'City', defaultVisible: true, filterable: true, type: 'text' },
-    { key: 'state', exportKey: 'state', label: 'State', defaultVisible: true, filterable: true, type: 'text' },
+    { key: 'city_state', exportKey: 'city_state', label: 'City & State', defaultVisible: true, filterable: true, type: 'text' },
     { key: 'aanchal', exportKey: 'aanchal', label: 'Aanchal', defaultVisible: false, filterable: true, type: 'text' },
     { key: 'travel_type', exportKey: 'travel_type', label: 'Travel Type', defaultVisible: false, filterable: true, type: 'text' },
-    { key: 'check_in_date', exportKey: 'check_in_date', label: 'Check-In Date', defaultVisible: true, filterable: true, type: 'date' },
-    { key: 'check_in_time', exportKey: 'check_in_time', label: 'Check-In Time', defaultVisible: false, filterable: true, type: 'time' },
-    { key: 'check_out_date', exportKey: 'check_out_date', label: 'Check-Out Date', defaultVisible: true, filterable: true, type: 'date' },
-    { key: 'check_out_time', exportKey: 'check_out_time', label: 'Check-Out Time', defaultVisible: false, filterable: true, type: 'time' },
+    { key: 'check_in_out', exportKey: 'check_in_out', label: 'Check In/Out', defaultVisible: true, filterable: false, type: 'text' },
     { key: 'total_persons', exportKey: 'total_persons', label: 'Total Persons', defaultVisible: true, filterable: true, type: 'text' },
     { key: 'family_coming', exportKey: 'family_coming', label: 'Family Coming', defaultVisible: false, filterable: true, type: 'select', options: ['yes', 'no'] },
     { key: 'no_of_people', exportKey: 'no_of_people', label: 'No of People', defaultVisible: false, filterable: true, type: 'text' },
@@ -184,7 +179,7 @@ const DB_COLUMNS = [
     { key: 'sixty_plus_female', exportKey: 'sixty_plus_female', label: '60+ Female', defaultVisible: false, filterable: true, type: 'text' },
     { key: 'is_veer_parivar', exportKey: 'is_veer_parivar', label: 'Veer Parivar', defaultVisible: false, filterable: true, type: 'select', options: ['yes', 'no'] },
     { key: 'remark', exportKey: 'remark', label: 'Remark', defaultVisible: false, filterable: true, type: 'text' },
-    { key: 'status', label: 'Status', defaultVisible: true, filterable: false },
+    { key: 'allotment_info', exportKey: 'allotment_info', label: 'Allotment Info', defaultVisible: true, filterable: false, type: 'text' },
     { key: 'actions', label: 'Action', defaultVisible: true, filterable: false }
 ];
 
@@ -295,12 +290,24 @@ function renderTable(data) {
                 let val = '';
                 if (col.key === 'index') val = ((currentPage - 1) * 25) + i + 1;
                 else if (col.key === 'status') val = `<span class="status-badge status-completed">Completed</span>`;
-                else if (col.key === 'actions') val = `<button class="btn btn-danger btn-sm" onclick="checkoutBooking('${row.type}', ${row.id})">Check Out</button>`;
+                else if (col.key === 'actions') val = `<div class="d-flex gap-2"><button class="btn btn-primary btn-sm" onclick="changeRoom('${row.type}', ${row.id})">Change Room</button><button class="btn btn-danger btn-sm" onclick="checkoutBooking('${row.type}', ${row.id})">Check Out</button></div>`;
                 else if (col.key === 'booking_id') val = `<strong>${row.display_id || row.id}</strong>`;
                 else if (col.key === 'total_persons') val = `<strong>${row.total_persons ?? '-'}</strong>`;
-                else if (col.key === 'city') val = row.city_name ?? row.city ?? '';
-                else if (col.key === 'state') val = row.state_name ?? row.state ?? '';
-                else if (col.key === 'aanchal') val = row.aanchal_name ?? row.aanchal ?? '';
+                else if (col.key === 'city_state') {
+                    const c = row.city ?? '';
+                    const s = row.state ?? '';
+                    val = (c && s) ? `${c}, ${s}` : (c || s || '-');
+                }
+                else if (col.key === 'check_in_out') {
+                    const ciDate = row.check_in_date ?? '';
+                    const ciTime = row.check_in_time ?? '';
+                    const coDate = row.check_out_date ?? '';
+                    const coTime = row.check_out_time ?? '';
+                    const ci = ciDate ? `${ciDate} ${ciTime}`.trim() : '-';
+                    const co = coDate ? `${coDate} ${coTime}`.trim() : '-';
+                    val = `<div><small><strong>In:</strong> ${ci}</small><br><small><strong>Out:</strong> ${co}</small></div>`;
+                }
+                else if (col.key === 'aanchal') val = row.aanchal ?? '';
                 else val = row[col.key] ?? '-';
                 
                 html += `<td style="${style}" data-col-idx="${idx}">${val}</td>`;
@@ -421,6 +428,49 @@ function checkoutBooking(type, id) {
                 if (response.success) {
                     Swal.fire('Checked Out!', 'The booking has been checked out.', 'success');
                     fetchData(); // Refresh the table
+                } else {
+                    Swal.fire('Error!', response.message || 'Something went wrong.', 'error');
+                }
+            })
+            .catch(() => {
+                Swal.fire('Error!', 'Unable to process the request.', 'error');
+            });
+        }
+    });
+}
+
+function changeRoom(type, id) {
+    Swal.fire({
+        title: 'Change Room?',
+        text: "This will remove the current room allotment. You will need to select a new room for this booking.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ffc107',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, change room!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Processing',
+                text: 'Clearing current room allotment...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch(`/api/registration/${type}/${id}/clear-room`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(res => res.json())
+            .then(response => {
+                if (response.success) {
+                    Swal.close();
+                    window.location.href = `/alot-room?booking_id=${id}&booking_type=${type}`;
                 } else {
                     Swal.fire('Error!', response.message || 'Something went wrong.', 'error');
                 }

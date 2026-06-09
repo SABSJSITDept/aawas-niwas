@@ -18,7 +18,7 @@ return [
     /*
      * Dejavu Sans font is missing glyphs for converted entities, turn it off if you need to show € and £.
      */
-    'convert_entities' => true,
+    'convert_entities' => false,
 
     'options' => [
         /**
@@ -45,7 +45,7 @@ return [
          * Times-Roman, Times-Bold, Times-BoldItalic, Times-Italic,
          * Symbol, ZapfDingbats.
          */
-        'font_dir' => storage_path('fonts'), // advised by dompdf (https://github.com/dompdf/dompdf/pull/782)
+        'font_dir' => resource_path('fonts'),
 
         /**
          * The location of the DOMPDF font cache directory
@@ -179,7 +179,7 @@ return [
          *
          * @var string
          */
-        'default_font' => 'serif',
+        'default_font' => 'noto sans devanagari',
 
         /**
          * Image DPI setting
@@ -296,11 +296,6 @@ return [
          * @var bool
          */
         'enable_html5_parser' => true,
-
-
-        'font_dir' => resource_path('fonts/'), // ⬅️ font path
-'font_cache' => storage_path('fonts/'),
-'default_font' => 'NotoSansDevanagari_SemiCondensed-Black', // ⬅️ set default font
 
     ],
 

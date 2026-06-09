@@ -1,206 +1,148 @@
 @extends('layouts.app')
 
 @section('content')
-
 @include('includes.header')
 
-<!-- Professional Hero Section -->
-<div class="pdf-hero-section">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6 text-white">
-                <div class="hero-content">
-                    <div class="hero-badge mb-3">
-                        <i class="bi bi-patch-check-fill me-2"></i>Secure & Verified
-                    </div>
-                    <h1 class="display-4 fw-bold mb-3">बुकिंग विवरण</h1>
-                    <p class="lead mb-4">अपनी बुकिंग की पूरी जानकारी तुरंत प्राप्त करें। PDF में देखें या डाउनलोड करें।</p>
-                    <div class="hero-features">
-                        <div class="feature-item">
-                            <i class="bi bi-lightning-charge-fill"></i>
-                            <span>Instant Access</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="bi bi-shield-check"></i>
-                            <span>Secure</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="bi bi-download"></i>
-                            <span>Easy Download</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Pre-fetch Tailwind via CDN as backup if Vite Tailwind is scoped -->
+<script src="https://cdn.tailwindcss.com"></script>
 
-<div class="container mt-n5 mb-5 pb-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <!-- Professional Card -->
-            <div class="professional-card">
-                <div class="card-header-modern">
-                    <div class="header-icon-wrapper">
-                        <i class="bi bi-file-earmark-pdf-fill"></i>
+<!-- Premium Tailwind UI Wrapper (Breaking out of Bootstrap Container) -->
+<div class="vw-100 position-relative" style="left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; background: #f8fafc;">
+    <div class="min-h-screen py-16 px-4 sm:px-6 lg:px-8 font-sans">
+        <div class="max-w-4xl mx-auto">
+            
+            <!-- Header Section -->
+            <div class="text-center mb-12 animate-fade-in-down">
+                <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800 mb-6 shadow-sm">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    Secure & Verified
+                </span>
+                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">
+                    बुकिंग <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">विवरण</span>
+                </h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto font-medium">
+                    अपनी फैमिली या ग्रुप बुकिंग की पूरी जानकारी तुरंत प्राप्त करें। सुरक्षित और तेज़ PDF एक्सेस।
+                </p>
+            </div>
+
+            <!-- Session Error Alert -->
+            @if(session('error'))
+                <div class="mb-8 bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl shadow-sm relative animate-fade-in-down" role="alert">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="block sm:inline font-bold">{{ session('error') }}</span>
                     </div>
-                    <h4 class="header-title">PDF Document Access</h4>
-                    <p class="header-subtitle">अपनी बुकिंग ID से पूरी जानकारी प्राप्त करें</p>
+                    <button type="button" class="absolute top-1/2 -translate-y-1/2 right-4 text-red-400 hover:text-red-600 transition-colors" onclick="this.parentElement.style.display='none'">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
-                <div class="card-body p-5">
-                    <!-- Professional Form -->
+            @endif
+
+            <!-- Main Card -->
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 transition-all duration-300 transform hover:-translate-y-1">
+                <div class="p-6 sm:p-10">
                     <form id="pdfForm" action="{{ route('user.booking.pdf') }}" method="GET">
                         @csrf
-
+                        
                         <!-- Booking Type Selection -->
-                        <div class="booking-type-selector mb-5">
-                            <label class="form-label-modern mb-3">बुकिंग टाइप चुनें</label>
-                            <div class="row g-3">
-                                {{-- <div class="col-md-4">
-                                    <div class="type-card" data-type="F">
-                                        <div class="type-icon family">
-                                            <i class="bi bi-people-fill"></i>
-                                        </div>
-                                        <h6 class="mb-1">Family</h6>
-                                        <small class="text-muted">F-XXX</small>
+                        <div class="mb-10">
+                            <label class="block text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">
+                                बुकिंग का प्रकार चुनें
+                            </label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <!-- Family Card -->
+                                <div class="type-card group relative p-6 rounded-2xl border-2 border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all duration-300" data-type="F">
+                                    <div class="absolute top-4 right-4 text-gray-200 group-hover:text-blue-500 transition-colors check-icon">
+                                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                                     </div>
-                                </div> --}}
-                               
-                                <div class="col-md-4">
-                                    <div class="type-card" data-type="G">
-                                        <div class="type-icon group">
-                                            <i class="bi bi-diagram-3-fill"></i>
+                                    <div class="flex items-center space-x-4">
+                                        <div class="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                                         </div>
-                                        <h6 class="mb-1">Group</h6>
-                                        <small class="text-muted">G-XXX</small>
+                                        <div>
+                                            <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-700">Family Booking</h3>
+                                            <p class="text-sm text-gray-500 font-medium mt-1">ID Format: <span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded font-bold">F-XXX</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Group Card -->
+                                <div class="type-card group relative p-6 rounded-2xl border-2 border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 cursor-pointer transition-all duration-300" data-type="G">
+                                    <div class="absolute top-4 right-4 text-gray-200 group-hover:text-emerald-500 transition-colors check-icon">
+                                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                                    </div>
+                                    <div class="flex items-center space-x-4">
+                                        <div class="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-xl font-bold text-gray-900 group-hover:text-emerald-700">Group Booking</h3>
+                                            <p class="text-sm text-gray-500 font-medium mt-1">ID Format: <span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-bold">G-XXX</span></p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Modern Booking ID Input -->
-                        <div class="form-group-modern mb-5">
-                            <label for="booking_id" class="form-label-modern">
-                                <i class="bi bi-hash me-2"></i>Enter Booking ID
-                            </label>
-                            <div class="input-wrapper-modern">
-                                <div class="input-icon">
-                                    <i class="bi bi-search"></i>
+                        <!-- Booking ID Input -->
+                        <div class="mb-10 relative">
+                            <label for="booking_id" class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Booking ID या Mobile Number दर्ज करें</label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors">
+                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                 </div>
-                                <input type="text" name="booking_id" id="booking_id" class="form-control-modern" required 
-                                       placeholder="जैसे: F-216, V-123, G-456"
-                                       autocomplete="off">
-                                <div class="input-status" id="inputStatus"></div>
+                                <input type="text" name="booking_id" id="booking_id" required
+                                       class="block w-full pl-16 pr-14 py-5 text-xl font-black text-gray-900 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all duration-300 placeholder-gray-400"
+                                       placeholder="उदाहरण: F-152 या 9876543210" autocomplete="off">
+                                <div id="inputStatus" class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none transition-all duration-300">
+                                    <!-- Status Icon -->
+                                </div>
                             </div>
-                            <div class="form-hint">
-                                <i class="bi bi-info-circle me-1"></i>
-                                अपनी बुकिंग ID टाइप या पेस्ट करें (Format: F-216)
-                            </div>
+                            <!-- Validation Error Message -->
+                            <p id="errorMessage" class="hidden mt-3 text-sm font-bold text-red-500 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                                <span id="errorText">कृपया सही फॉर्मेट में ID (F-XXX या G-XXX) या 10 अंकों का मोबाइल नंबर दर्ज करें</span>
+                            </p>
                         </div>
 
                         <input type="hidden" name="action" id="actionInput" value="download">
 
-                        <!-- Professional Action Buttons -->
-                                <button type="submit" class="btn-modern btn-modern-outline w-100"
-                                    onclick="document.getElementById('actionInput').value='view'">
-                                    <div class="btn-icon">
-                                        <i class="bi bi-eye-fill"></i>
-                                    </div>
-                                    <div class="btn-content">
-                                        <span class="btn-title">View PDF</span>
-                                        <span class="btn-subtitle">ब्राउज़र में देखें</span>
-                                    </div>
-                                </button>
-                            </div>
-                            <div class="col-md-6">
-                                <button type="submit" class="btn-modern btn-modern-primary w-100"
-                                    onclick="document.getElementById('actionInput').value='download'">
-                                    <div class="btn-icon">
-                                        <i class="bi bi-download"></i>
-                                    </div>
-                                    <div class="btn-content">
-                                        <span class="btn-title">Download PDF</span>
-                                        <span class="btn-subtitle">डिवाइस में सेव करें</span>
-                                    </div>
-                                </button>
-                            </div>
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6">
+                            <button type="submit" onclick="document.getElementById('actionInput').value='view'"
+                                    class="relative flex items-center justify-center w-full px-8 py-4 text-lg font-bold text-blue-700 bg-blue-50 border-2 border-blue-200 rounded-2xl hover:bg-blue-100 hover:border-blue-300 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/30 overflow-hidden group">
+                                <svg class="w-6 h-6 mr-3 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                <span>View PDF <span class="block text-xs font-medium opacity-70 mt-0.5">ब्राउज़र में देखें</span></span>
+                            </button>
+                            
+                            <button type="submit" onclick="document.getElementById('actionInput').value='download'"
+                                    class="relative flex items-center justify-center w-full px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 overflow-hidden group">
+                                <svg class="w-6 h-6 mr-3 group-hover:-translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                <span>Download PDF <span class="block text-xs font-medium text-blue-100 mt-0.5">डिवाइस में सेव करें</span></span>
+                            </button>
                         </div>
                     </form>
-
-                    <!-- Professional Info Cards -->
-                    <div class="info-cards-grid">
-                        <div class="info-card">
-                            <div class="info-icon blue">
-                                <i class="bi bi-lightning-charge-fill"></i>
-                            </div>
-                            <div class="info-content">
-                                <h6>Instant Access</h6>
-                                <p>तुरंत अपनी बुकिंग देखें</p>
-                            </div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-icon green">
-                                <i class="bi bi-shield-check"></i>
-                            </div>
-                            <div class="info-content">
-                                <h6>Secure & Safe</h6>
-                                <p>पूरी तरह सुरक्षित सिस्टम</p>
-                            </div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-icon purple">
-                                <i class="bi bi-file-earmark-pdf"></i>
-                            </div>
-                            <div class="info-content">
-                                <h6>High Quality PDF</h6>
-                                <p>Professional PDF format</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tips Section -->
-                    <div class="tips-section">
-                        <div class="tips-header">
-                            <i class="bi bi-lightbulb-fill"></i>
-                            <span>महत्वपूर्ण जानकारी</span>
-                        </div>
-                        <div class="tips-content">
-                            <div class="tip-item">
-                                <i class="bi bi-check-circle-fill"></i>
-                                <span>Booking ID हमेशा capital letters में होती है</span>
-                            </div>
-                            <div class="tip-item">
-                                <i class="bi bi-check-circle-fill"></i>
-                                <span>Format: Letter-Number (जैसे F-216, V-123)</span>
-                            </div>
-                            <div class="tip-item">
-                                <i class="bi bi-check-circle-fill"></i>
-                                <span>Download करने से पहले View option से चेक कर सकते हैं</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Additional Feature Cards -->
-            <div class="row g-4 mt-4">
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon-wrapper orange">
-                            <i class="bi bi-clock-history"></i>
-                        </div>
-                        <h5>24/7 Access</h5>
-                        <p>कभी भी अपनी बुकिंग देखें</p>
-                    </div>
                 </div>
                 
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon-wrapper green">
-                            <i class="bi bi-printer"></i>
+                <!-- Features Footer -->
+                <div class="bg-gray-50 border-t border-gray-100 p-6 sm:px-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm font-bold text-gray-600">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-emerald-100 rounded-lg mr-3">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                         </div>
-                        <h5>Print Ready</h5>
-                        <p>Direct print कर सकते हैं</p>
+                        Secure & Verified
+                    </div>
+                    <div class="flex items-center">
+                        <div class="p-2 bg-blue-100 rounded-lg mr-3">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        Instant Access
+                    </div>
+                    <div class="flex items-center">
+                        <div class="p-2 bg-purple-100 rounded-lg mr-3">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        </div>
+                        Print Ready
                     </div>
                 </div>
             </div>
@@ -210,850 +152,125 @@
 
 @include('includes.footer')
 
-<!-- Professional JavaScript -->
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-down {
+        animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    .type-card.active-family {
+        border-color: #3b82f6 !important; /* blue-500 */
+        background-color: #eff6ff !important; /* blue-50 */
+        box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3) !important;
+    }
+    
+    .type-card.active-group {
+        border-color: #10b981 !important; /* emerald-500 */
+        background-color: #ecfdf5 !important; /* emerald-50 */
+        box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3) !important;
+    }
+    
+    .type-card.active-family .check-icon, 
+    .type-card.active-group .check-icon {
+        color: currentColor !important;
+    }
+    .type-card.active-family .check-icon { color: #3b82f6 !important; }
+    .type-card.active-group .check-icon { color: #10b981 !important; }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('pdfForm');
     const bookingIdInput = document.getElementById('booking_id');
     const inputStatus = document.getElementById('inputStatus');
+    const errorMessage = document.getElementById('errorMessage');
     const typeCards = document.querySelectorAll('.type-card');
     
-    // Type Card Selection
+    // Initial state check
+    if(bookingIdInput.value) validateInput();
+
+    // Type Card Click Handler
     typeCards.forEach(card => {
         card.addEventListener('click', function() {
-            // Remove active class from all
-            typeCards.forEach(c => c.classList.remove('active'));
-            // Add active class to clicked
-            this.classList.add('active');
-            
-            // Auto-fill booking type
-            const type = this.dataset.type;
-            if (bookingIdInput.value === '' || bookingIdInput.value.length <= 2) {
-                bookingIdInput.value = type + '-';
-                bookingIdInput.focus();
-                updateInputStatus();
-            }
+            const type = this.dataset.type; // 'F' or 'G'
+            bookingIdInput.value = type + '-';
+            bookingIdInput.focus();
+            validateInput();
         });
     });
     
-    // Set G as default booking type on page load
-    const gCard = document.querySelector('[data-type="G"]');
-    if (gCard) {
-        gCard.classList.add('active');
-        bookingIdInput.value = 'G-';
-    }
+    // Input Validation & Auto-Formatting
+    bookingIdInput.addEventListener('input', validateInput);
     
-    // Enhanced booking ID validation with visual feedback
-    bookingIdInput.addEventListener('input', function() {
-        updateInputStatus();
-    });
-    
-    function updateInputStatus() {
-        const value = bookingIdInput.value.trim().toUpperCase();
-        bookingIdInput.value = value;
+    function validateInput() {
+        let value = bookingIdInput.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
         
-        // Reset status
-        inputStatus.innerHTML = '';
-        bookingIdInput.style.borderColor = '#e2e8f0';
-        
-        if (value.startsWith('F-')) {
-            if (/^F-\d+$/.test(value)) {
-                inputStatus.innerHTML = '<i class="bi bi-check-circle-fill" style="color: #10b981;"></i>';
-                bookingIdInput.style.borderColor = '#10b981';
-                activateTypeCard('F');
-            } else if (value.length > 2) {
-                inputStatus.innerHTML = '<i class="bi bi-exclamation-circle-fill" style="color: #f59e0b;"></i>';
-                bookingIdInput.style.borderColor = '#f59e0b';
-            }
-        } else if (value.startsWith('V-')) {
-            if (/^V-\d+$/.test(value)) {
-                inputStatus.innerHTML = '<i class="bi bi-check-circle-fill" style="color: #10b981;"></i>';
-                bookingIdInput.style.borderColor = '#10b981';
-                activateTypeCard('V');
-            } else if (value.length > 2) {
-                inputStatus.innerHTML = '<i class="bi bi-exclamation-circle-fill" style="color: #f59e0b;"></i>';
-                bookingIdInput.style.borderColor = '#f59e0b';
-            }
-        } else if (value.startsWith('G-')) {
-            if (/^G-\d+$/.test(value)) {
-                inputStatus.innerHTML = '<i class="bi bi-check-circle-fill" style="color: #10b981;"></i>';
-                bookingIdInput.style.borderColor = '#10b981';
-                activateTypeCard('G');
-            } else if (value.length > 2) {
-                inputStatus.innerHTML = '<i class="bi bi-exclamation-circle-fill" style="color: #f59e0b;"></i>';
-                bookingIdInput.style.borderColor = '#f59e0b';
-            }
-        } else if (value.length > 0) {
-            inputStatus.innerHTML = '<i class="bi bi-x-circle-fill" style="color: #ef4444;"></i>';
-            bookingIdInput.style.borderColor = '#ef4444';
-        }
-    }
-    
-    function activateTypeCard(type) {
-        typeCards.forEach(card => {
-            if (card.dataset.type === type) {
-                card.classList.add('active');
-            } else {
-                card.classList.remove('active');
-            }
-        });
-    }
-    
-    // Enhanced form submission with loading state and validation
-    form.addEventListener('submit', function(e) {
-        const submitButton = e.submitter;
-        const originalHTML = submitButton.innerHTML;
-        const bookingId = bookingIdInput.value.trim();
-        
-        // Basic validation
-        if (!bookingId) {
-            e.preventDefault();
-            showAlert('कृपया Booking ID दर्ज करें', 'warning');
-            bookingIdInput.focus();
-            return;
-        }
-        
-        // Check booking ID format
-        if (!(/^[FVG]-\d+$/i.test(bookingId))) {
-            e.preventDefault();
-            showAlert('कृपया सही फॉर्मेट में Booking ID दर्ज करें (जैसे: F-216, V-123, G-456)', 'danger');
-            bookingIdInput.focus();
-            return;
-        }
-        
-        // Add loading state
-        submitButton.disabled = true;
-        const isView = submitButton.onclick && submitButton.onclick.toString().includes('view');
-        const actionText = isView ? 'देखा जा रहा है' : 'डाउनलोड हो रहा है';
-        
-        submitButton.innerHTML = `
-            <div class="btn-icon">
-                <div class="spinner-border spinner-border-sm" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-            <div class="btn-content">
-                <span class="btn-title">${actionText}...</span>
-                <span class="btn-subtitle">कृपया प्रतीक्षा करें</span>
-            </div>
-        `;
-        
-        // Reset button after 10 seconds (fallback)
-        setTimeout(() => {
-            submitButton.disabled = false;
-            submitButton.innerHTML = originalHTML;
-        }, 10000);
-    });
-    
-    // Auto-format booking ID as user types
-    bookingIdInput.addEventListener('keyup', function(e) {
-        let value = this.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
-        
-        // Auto-add hyphen after letter
+        // Auto-add hyphen
         if (value.length === 1 && /[FVG]/.test(value)) {
             value += '-';
         }
         
-        // Limit length
-        if (value.length > 10) {
-            value = value.substring(0, 10);
-        }
+        bookingIdInput.value = value;
         
-        this.value = value;
-        updateInputStatus();
-    });
-    
-    // Paste handling
-    bookingIdInput.addEventListener('paste', function(e) {
-        setTimeout(() => {
-            updateInputStatus();
-        }, 10);
-    });
-    
-    // Show alert function
-    function showAlert(message, type = 'info') {
-        // Remove existing alerts
-        const existingAlert = document.querySelector('.dynamic-alert');
-        if (existingAlert) {
-            existingAlert.remove();
-        }
+        // Reset Visuals
+        typeCards.forEach(c => c.classList.remove('active-family', 'active-group'));
+        inputStatus.innerHTML = '';
+        bookingIdInput.classList.remove('border-red-400', 'border-emerald-400', 'border-blue-400');
+        errorMessage.classList.add('hidden');
         
-        // Create new alert
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show dynamic-alert`;
-        alertDiv.style.marginBottom = '20px';
-        
-        let icon = '';
-        switch(type) {
-            case 'success':
-                icon = '<i class="bi bi-check-circle-fill me-2"></i>';
-                break;
-            case 'danger':
-                icon = '<i class="bi bi-x-circle-fill me-2"></i>';
-                break;
-            case 'warning':
-                icon = '<i class="bi bi-exclamation-triangle-fill me-2"></i>';
-                break;
-            default:
-                icon = '<i class="bi bi-info-circle-fill me-2"></i>';
-        }
-        
-        alertDiv.innerHTML = `
-            ${icon}${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        // Insert before form
-        form.parentNode.insertBefore(alertDiv, form);
-        
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => {
-            if (alertDiv && alertDiv.parentNode) {
-                alertDiv.classList.remove('show');
-                setTimeout(() => alertDiv.remove(), 300);
+        // Match Pattern
+        if (/^\d+$/.test(value)) {
+            // Mobile Number logic
+            if (value.length === 10) {
+                showSuccessStatus('text-blue-500');
+                bookingIdInput.classList.add('border-blue-400');
+            } else if (value.length > 10) {
+                showErrorStatus();
             }
-        }, 5000);
+        } else if (value.startsWith('F-')) {
+            document.querySelector('[data-type="F"]').classList.add('active-family');
+            if (/^F-\d+$/.test(value)) {
+                showSuccessStatus('text-blue-500');
+                bookingIdInput.classList.add('border-blue-400');
+            } else if (value.length > 2) {
+                showErrorStatus();
+            }
+        } else if (value.startsWith('G-')) {
+            document.querySelector('[data-type="G"]').classList.add('active-group');
+            if (/^G-\d+$/.test(value)) {
+                showSuccessStatus('text-emerald-500');
+                bookingIdInput.classList.add('border-emerald-400');
+            } else if (value.length > 2) {
+                showErrorStatus();
+            }
+        } else if (value.length > 0) {
+            showErrorStatus();
+        }
     }
     
-    // Add smooth scroll animation
-    window.addEventListener('load', function() {
-        document.body.style.opacity = '0';
-        setTimeout(() => {
-            document.body.style.transition = 'opacity 0.5s ease';
-            document.body.style.opacity = '1';
-        }, 100);
+    function showSuccessStatus(colorClass) {
+        inputStatus.innerHTML = `<svg class="w-8 h-8 ${colorClass} animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+    }
+    
+    function showErrorStatus() {
+        bookingIdInput.classList.add('border-red-400');
+        inputStatus.innerHTML = `<svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    }
+    
+    // Form Submission Validation
+    form.addEventListener('submit', function(e) {
+        const bookingId = bookingIdInput.value.trim();
+        
+        if (!(/^[FVG]-\d+$/i.test(bookingId)) && !(/^\d{10}$/.test(bookingId))) {
+            e.preventDefault();
+            bookingIdInput.classList.add('border-red-500');
+            errorMessage.classList.remove('hidden');
+            bookingIdInput.focus();
+        }
     });
 });
 </script>
-
-<!-- Professional Modern CSS -->
-<style>
-:root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --orange-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    --green-gradient: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
-}
-
-/* Hero Section */
-.pdf-hero-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 80px 0 120px;
-    position: relative;
-    overflow: hidden;
-}
-
-.pdf-hero-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,101.3C1248,85,1344,75,1392,69.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') bottom center no-repeat;
-    background-size: cover;
-}
-
-.hero-content {
-    position: relative;
-    z-index: 2;
-}
-
-.hero-badge {
-    display: inline-block;
-    padding: 8px 20px;
-    background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(10px);
-    border-radius: 50px;
-    font-size: 14px;
-    font-weight: 600;
-    animation: fadeInDown 0.6s ease;
-}
-
-.hero-features {
-    display: flex;
-    gap: 30px;
-    flex-wrap: wrap;
-}
-
-.feature-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 24px;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(10px);
-    border-radius: 50px;
-    font-weight: 500;
-}
-
-.feature-item i {
-    font-size: 20px;
-}
-
-/* Professional Card */
-.professional-card {
-    background: white;
-    border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-    overflow: hidden;
-    position: relative;
-    animation: fadeInUp 0.6s ease;
-}
-
-.card-header-modern {
-    text-align: center;
-    padding: 40px 30px 30px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    position: relative;
-}
-
-.header-icon-wrapper {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-    animation: bounce 2s infinite;
-}
-
-.header-icon-wrapper i {
-    font-size: 36px;
-    color: white;
-}
-
-.header-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #2d3748;
-    margin-bottom: 8px;
-}
-
-.header-subtitle {
-    color: #718096;
-    font-size: 16px;
-    margin: 0;
-}
-
-/* Booking Type Selector */
-.booking-type-selector {
-    animation: fadeIn 0.8s ease;
-}
-
-.form-label-modern {
-    font-size: 16px;
-    font-weight: 600;
-    color: #2d3748;
-    display: block;
-}
-
-.type-card {
-    background: white;
-    border: 2px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.type-card:hover {
-    border-color: #667eea;
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
-}
-
-.type-card.active {
-    border-color: #667eea;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.type-icon {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 16px;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-}
-
-.type-icon.family {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-}
-
-.type-icon.vip {
-    background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
-    color: white;
-}
-
-.type-icon.group {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    color: white;
-}
-
-.type-card.active .type-icon {
-    background: rgba(255,255,255,0.2);
-}
-
-/* Modern Input */
-.form-group-modern {
-    animation: fadeIn 1s ease;
-}
-
-.input-wrapper-modern {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.input-icon {
-    position: absolute;
-    left: 20px;
-    z-index: 2;
-    color: #a0aec0;
-    font-size: 20px;
-    transition: all 0.3s ease;
-}
-
-.form-control-modern {
-    width: 100%;
-    padding: 18px 60px 18px 60px;
-    border: 2px solid #e2e8f0;
-    border-radius: 16px;
-    font-size: 16px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    background: white;
-}
-
-.form-control-modern:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-}
-
-.form-control-modern:focus ~ .input-icon {
-    color: #667eea;
-}
-
-.input-status {
-    position: absolute;
-    right: 20px;
-    font-size: 24px;
-    transition: all 0.3s ease;
-}
-
-.form-hint {
-    margin-top: 12px;
-    color: #718096;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* Professional Buttons */
-.btn-modern {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px 24px;
-    border: none;
-    border-radius: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-modern::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.btn-modern:hover::before {
-    width: 300px;
-    height: 300px;
-}
-
-.btn-modern-outline {
-    background: white;
-    border: 2px solid #667eea;
-    color: #667eea;
-}
-
-.btn-modern-outline:hover {
-    background: #667eea;
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-}
-
-.btn-modern-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.btn-modern-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
-}
-
-.btn-icon {
-    width: 48px;
-    height: 48px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    flex-shrink: 0;
-}
-
-.btn-modern-outline .btn-icon {
-    background: rgba(102, 126, 234, 0.1);
-}
-
-.btn-content {
-    text-align: left;
-    flex: 1;
-}
-
-.btn-title {
-    display: block;
-    font-size: 16px;
-    margin-bottom: 2px;
-}
-
-.btn-subtitle {
-    display: block;
-    font-size: 12px;
-    opacity: 0.8;
-    font-weight: 400;
-}
-
-/* Info Cards Grid */
-.info-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-top: 40px;
-    padding-top: 40px;
-    border-top: 2px solid #e2e8f0;
-}
-
-.info-card {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 16px;
-    transition: all 0.3s ease;
-}
-
-.info-card:hover {
-    background: white;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-    transform: translateY(-3px);
-}
-
-.info-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    color: white;
-    flex-shrink: 0;
-}
-
-.info-icon.blue {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.info-icon.green {
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-}
-
-.info-icon.purple {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.info-content h6 {
-    margin: 0 0 4px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #2d3748;
-}
-
-.info-content p {
-    margin: 0;
-    font-size: 12px;
-    color: #718096;
-}
-
-/* Tips Section */
-.tips-section {
-    margin-top: 40px;
-    padding: 24px;
-    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 20%, #ff9a9e 40%, #fad0c4 100%);
-    border-radius: 16px;
-}
-
-.tips-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 18px;
-    font-weight: 700;
-    color: #2d3748;
-    margin-bottom: 16px;
-}
-
-.tips-header i {
-    font-size: 24px;
-    color: #f59e0b;
-}
-
-.tips-content {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.tip-item {
-    display: flex;
-    align-items: start;
-    gap: 12px;
-    padding: 12px;
-    background: rgba(255,255,255,0.7);
-    border-radius: 12px;
-    font-size: 14px;
-    color: #2d3748;
-}
-
-.tip-item i {
-    color: #10b981;
-    font-size: 18px;
-    flex-shrink: 0;
-    margin-top: 2px;
-}
-
-/* Feature Cards */
-.feature-card {
-    background: white;
-    padding: 32px 24px;
-    border-radius: 20px;
-    text-align: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
-}
-
-.feature-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-}
-
-.feature-icon-wrapper {
-    width: 70px;
-    height: 70px;
-    margin: 0 auto 20px;
-    border-radius: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    color: white;
-}
-
-.feature-icon-wrapper.orange {
-    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-}
-
-.feature-icon-wrapper.blue {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.feature-icon-wrapper.green {
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-}
-
-.feature-card h5 {
-    font-size: 18px;
-    font-weight: 700;
-    color: #2d3748;
-    margin-bottom: 8px;
-}
-
-.feature-card p {
-    margin: 0;
-    color: #718096;
-    font-size: 14px;
-}
-
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes bounce {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
-}
-
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
-
-.loading {
-    animation: pulse 1.5s infinite;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .pdf-hero-section {
-        padding: 60px 0 100px;
-    }
-    
-    .hero-features {
-        gap: 15px;
-    }
-    
-    .feature-item {
-        padding: 10px 16px;
-        font-size: 14px;
-    }
-    
-    .professional-card {
-        border-radius: 16px;
-    }
-    
-    .card-header-modern {
-        padding: 30px 20px 20px;
-    }
-    
-    .header-icon-wrapper {
-        width: 60px;
-        height: 60px;
-    }
-    
-    .header-icon-wrapper i {
-        font-size: 28px;
-    }
-    
-    .header-title {
-        font-size: 22px;
-    }
-    
-    .type-card {
-        padding: 16px;
-    }
-    
-    .type-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-    }
-    
-    .info-cards-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .mt-n5 {
-        margin-top: -3rem !important;
-    }
-}
-
-/* Alert Styling */
-.alert {
-    border: none;
-    border-radius: 12px;
-    padding: 16px 20px;
-    border-left: 4px solid;
-    animation: fadeInDown 0.4s ease;
-}
-
-.alert-info {
-    background: #e0f2fe;
-    border-left-color: #0ea5e9;
-    color: #075985;
-}
-
-.alert-warning {
-    background: #fef3c7;
-    border-left-color: #f59e0b;
-    color: #92400e;
-}
-
-.alert-danger {
-    background: #fee2e2;
-    border-left-color: #ef4444;
-    color: #991b1b;
-}
-
-.alert-success {
-    background: #d1fae5;
-    border-left-color: #10b981;
-    color: #065f46;
-}
-</style>
-
 @endsection

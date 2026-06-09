@@ -1,7 +1,11 @@
 {
     "poppins": {
-        "normal": "E:\\chaturmas\\resources\\fonts\/\/poppins_normal_c6711d47669d7317aa5bfeda9f1dded3",
-        "600": "E:\\chaturmas\\resources\\fonts\/\/poppins_600_8766355d2de6e5a80a8dfebc31aeaedf",
+        "normal": "e:\\aawas_niwas_jorawarpura\\resources\\fonts\\poppins_normal_c6711d47669d7317aa5bfeda9f1dded3",
+        "600": "e:\\aawas_niwas_jorawarpura\\resources\\fonts\\poppins_600_8766355d2de6e5a80a8dfebc31aeaedf",
         "bold": "poppins_bold_e65267788fadc7206923de221454a2be"
+    },
+    "noto sans devanagari": {
+        "normal": "E:\\aawas_niwas_jorawarpura\\resources\\fonts\/noto_sans_devanagari_normal_7dbb5379d1ad99a066fa4273c1a12473",
+        "bold": "noto_sans_devanagari_bold_e665d102423f4705ffd16fc70b291a41"
     }
 }

@@ -485,8 +485,9 @@ $(function(){
 
     $('#btn-refresh').on('click', function(){
         $search.val(''); $bookingIdSearch.val('');
-        // reload reference data before bookings so names appear instead of codes
-        loadReferenceData().then(() => loadBookings());
+        // trigger background fetch for reference data
+        loadReferenceData();
+        loadBookings();
     });
 
     function buildQueryParams() {
@@ -523,14 +524,10 @@ $(function(){
         { key: 'gender', exportKey: 'gender', label: 'Gender', defaultVisible: false, filterable: true, type: 'select', options: ['Male', 'Female'] },
         { key: 'ms_name', exportKey: 'ms_name', label: 'MS Name', defaultVisible: false, filterable: true, type: 'text' },
         { key: 'mid', exportKey: 'mid', label: 'MID', defaultVisible: false, filterable: true, type: 'text' },
-        { key: 'city', exportKey: 'city', label: 'City', defaultVisible: true, filterable: true, type: 'text' },
-        { key: 'state', exportKey: 'state', label: 'State', defaultVisible: true, filterable: true, type: 'text' },
+        { key: 'city_state', label: 'City & State', defaultVisible: true, filterable: false },
         { key: 'aanchal', exportKey: 'aanchal', label: 'Aanchal', defaultVisible: false, filterable: true, type: 'text' },
         { key: 'travel_type', exportKey: 'travel_type', label: 'Travel Type', defaultVisible: false, filterable: true, type: 'text' },
-        { key: 'check_in_date', exportKey: 'check_in_date', label: 'Check-In Date', defaultVisible: true, filterable: true, type: 'date' },
-        { key: 'check_in_time', exportKey: 'check_in_time', label: 'Check-In Time', defaultVisible: false, filterable: true, type: 'time' },
-        { key: 'check_out_date', exportKey: 'check_out_date', label: 'Check-Out Date', defaultVisible: true, filterable: true, type: 'date' },
-        { key: 'check_out_time', exportKey: 'check_out_time', label: 'Check-Out Time', defaultVisible: false, filterable: true, type: 'time' },
+        { key: 'check_in_out', label: 'Check In/Out', defaultVisible: true, filterable: false },
         { key: 'total_persons', exportKey: 'total_persons', label: 'Total Persons', defaultVisible: true, filterable: true, type: 'text' },
         { key: 'family_coming', exportKey: 'family_coming', label: 'Family Coming', defaultVisible: false, filterable: true, type: 'select', options: ['yes', 'no'] },
         { key: 'no_of_people', exportKey: 'no_of_people', label: 'No of People', defaultVisible: false, filterable: true, type: 'text' },
@@ -603,10 +600,9 @@ $(function(){
     async function loadBookings() {
         $tbody.html(`<tr><td colspan="${DB_COLUMNS.length}" class="text-center text-muted py-4">Loading...</td></tr>`);
         try {
-            if ((!allCities || allCities.length===0) || (!allStates || allStates.length===0)) {
-                await loadReferenceData();
-            }
-
+            // No longer awaiting loadReferenceData to ensure fast rendering.
+            // City/State names are already provided by the backend endpoint.
+            
             const qs = new URLSearchParams(buildQueryParams()).toString();
             const res = await axios.get(`${localApiBase}/bookings?${qs}`);
             const data = res.data.data || [];
@@ -646,12 +642,16 @@ $(function(){
                         </div>
                     ` : `
                         <div class="mt-2">
+                            ${(b.check_out_date && b.check_out_date < new Date().toISOString().split('T')[0]) ? `
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="Swal.fire('Not Allowed', 'This is a past booking. Please extend check-out date to allot room.', 'error')" title="Cannot Allot Room">🚫 Past Booking</button>
+                            ` : `
                             <form action="/alot-room" method="GET" class="d-inline">
                                 <input type="hidden" name="booking_id" value="${b.id}">
                                 <input type="hidden" name="total_persons" value="${b.total_persons ?? ''}">
                                 <input type="hidden" name="booking_type" value="${b.type}">
                                 <button type="submit" class="btn btn-success btn-sm" title="Allot Room">✅ Allot Room</button>
                             </form>
+                            `}
                         </div>
                     `}
                 `;
@@ -664,8 +664,20 @@ $(function(){
                     else if (col.key === 'actions') val = actionHtml;
                     else if (col.key === 'type') val = `<span class="badge bg-${typeBadge} text-dark badge-type">${b.type}</span>`;
                     else if (col.key === 'booking_id') val = b.display_id ?? b.booking_id ?? (b.type === 'family' ? 'F-' : 'G-') + (b.id + 100);
-                    else if (col.key === 'city') val = getCity(b.city);
-                    else if (col.key === 'state') val = getState(b.state);
+                    else if (col.key === 'city_state') {
+                        const c = getCity(b.city);
+                        const s = getState(b.state);
+                        val = (c && s) ? `${c}, ${s}` : (c || s || '-');
+                    }
+                    else if (col.key === 'check_in_out') {
+                        const ciDate = b.check_in_date ?? '';
+                        const ciTime = b.check_in_time ?? '';
+                        const coDate = b.check_out_date ?? '';
+                        const coTime = b.check_out_time ?? '';
+                        const ci = ciDate ? `${ciDate} ${ciTime}`.trim() : '-';
+                        const co = coDate ? `${coDate} ${coTime}`.trim() : '-';
+                        val = `<div><small><strong>In:</strong> ${ci}</small><br><small><strong>Out:</strong> ${co}</small></div>`;
+                    }
                     else if (col.key === 'aanchal') val = getAanchal(b.aanchal);
                     else val = b[col.key] ?? '';
                     
@@ -806,7 +818,7 @@ $(function(){
             $('#edit_check_out_date').val(booking.check_out_date ?? '');
             $('#edit_check_out_time').val(booking.check_out_time ?? '');
             $('#edit_family_coming').val(booking.family_coming ?? (booking.total_members ? '1' : '0'));
-            $('#edit_no_of_children').val(booking.no_of_children ?? '');
+            $('#edit_no_of_children').val(booking.no_of_children ?? booking.child_count ?? '');
             // total_persons editable directly
             $('#edit_total_persons').val(booking.total_persons ?? (parseInt(booking.total_members) ? (parseInt(booking.total_members)+1) : ''));
 
@@ -1004,7 +1016,11 @@ $(function(){
      * Initial load: load reference data then bookings
      **************************************************************************/
     initDynamicHeaders();
-    loadReferenceData().then(() => loadBookings());
+    
+    // Load reference data in the background (for edit modals and form inputs)
+    loadReferenceData();
+    // Load bookings immediately to prevent UI blocking
+    loadBookings();
 });
 </script>
 

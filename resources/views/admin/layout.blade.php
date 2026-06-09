@@ -253,6 +253,7 @@
             <i class="bi bi-caret-down-fill"></i>
           </button>
           <div id="menuStudent" class="submenu collapse">
+            <a href="{{ route('registration.all_list_api') }}">All Registrations</a>
             <a href="{{ route('registration.list') }}">All Booking</a>
             <a href="{{ route('registration.completed_list_api') }}">Alloted Booking</a>
             <a href="{{ route('registration.checkout_list_api') }}">Check-Out Booking</a>
@@ -330,8 +331,8 @@
     <a href="{{ route('select.hotel') }}" class="d-flex align-items-center gap-2">
       <i class="bi bi-building"></i> All Hotel Details
     </a>
-    <a href="{{ route('rooms.export.all') }}" class="d-flex align-items-center gap-2">
-      <i class="bi bi-file-earmark-excel text-success"></i> All Hotel Availability Excel Report
+    <a href="{{ route('rooms.dashboard') }}" class="d-flex align-items-center gap-2">
+      <i class="bi bi-speedometer2 text-info"></i> Hotel Availability Dashboard
     </a>
     <a href="{{ url('/admin/room-features-page') }}" class="d-flex align-items-center gap-2">
       <i class="bi bi-file-earmark-pdf text-danger"></i> Hotel Wise Room Features Report
@@ -345,15 +346,11 @@
     <a href="{{ route('group.members.export') }}" class="d-flex align-items-center gap-2">
       <i class="bi bi-people text-warning"></i> Group Members Excel Report
     </a>
-    <a href="{{ route('admin.room.booking.report') }}" class="d-flex align-items-center gap-2">
-      <i class="bi bi-calendar2-week text-primary"></i> Hotel Datewise Booking Report
-    </a>  
+
     <a href="{{ route('room.checkin.report') }}" class="d-flex align-items-center gap-2">
       <i class="bi bi-journal-text text-secondary"></i> Datewise Registration Report
     </a>  
-    <a href="{{ route('daily.report') }}" class="d-flex align-items-center gap-2">
-      <i class="bi bi-clock-history text-dark"></i> Daily Stay Report
-    </a>  
+
     <a href="{{ route('admin.checkin.report') }}" class="d-flex align-items-center gap-2">
       <i class="bi bi-door-open text-success"></i> Datewise Check In Check Out Report
     </a>
@@ -419,6 +416,7 @@
             <i class="bi bi-person-badge"></i> Registration
           </button>
           <div class="header-dropdown">
+            <a href="{{ route('registration.all_list_api') }}">All Registrations</a>
             <a href="{{ route('registration.list') }}">All Booking</a>
             <a href="{{ route('registration.completed_list_api') }}">Alloted Booking</a>
             <a href="{{ route('registration.checkout_list_api') }}">Check-Out Booking</a>
@@ -455,14 +453,14 @@
           </button>
           <div class="header-dropdown">
             <a href="{{ route('select.hotel') }}"><i class="bi bi-building"></i> All Hotel Details</a>
-            <a href="{{ route('rooms.export.all') }}"><i class="bi bi-file-earmark-excel text-success"></i> Hotel Availability Excel</a>
+            <a href="{{ route('rooms.dashboard') }}"><i class="bi bi-speedometer2 text-info"></i> Hotel Availability Dashboard</a>
             <a href="{{ url('/admin/room-features-page') }}"><i class="bi bi-file-earmark-pdf text-danger"></i> Room Features Report</a>
             <a href="{{ route('admin.room.report') }}"><i class="bi bi-calendar-check text-primary"></i> Booked Room Report</a>
             <a href="{{ route('family.members.export') }}"><i class="bi bi-people-fill text-info"></i> Family Members Report</a>
             <a href="{{ route('group.members.export') }}"><i class="bi bi-people text-warning"></i> Group Members Report</a>
-            <a href="{{ route('admin.room.booking.report') }}"><i class="bi bi-calendar2-week text-primary"></i> Hotel Datewise Report</a>
+
             <a href="{{ route('room.checkin.report') }}"><i class="bi bi-journal-text text-secondary"></i> Registration Report</a>
-            <a href="{{ route('daily.report') }}"><i class="bi bi-clock-history text-dark"></i> Daily Stay Report</a>
+
             <a href="{{ route('admin.checkin.report') }}"><i class="bi bi-door-open text-success"></i> Check In/Out Report</a>
             <a href="{{ route('admin.parivahan.datewise.report') }}"><i class="bi bi-truck text-danger"></i> Parivahan Report</a>
           </div>
