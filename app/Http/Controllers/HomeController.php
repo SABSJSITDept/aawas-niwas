@@ -7,9 +7,10 @@ use App\Models\News;
 
 class HomeController extends Controller
 {
-   public function index()
-{
-    $news = News::where('is_active', true)->latest()->take(5)->get();
-    return view('home', compact('news'));
-}
+    public function index()
+    {
+        $news = News::where('is_active', true)->latest()->take(5)->get();
+        $medicalHelplines = \App\Models\Helpline::where('status', true)->where('is_home_medical', true)->get();
+        return view('home', compact('news', 'medicalHelplines'));
+    }
 }

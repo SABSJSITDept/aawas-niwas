@@ -8,6 +8,7 @@ class BhojanshalaController extends Controller
 {
     public function index()
     {
-        return view('bhojanshala');
+        $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
+        return view('bhojanshala', compact('settings'));
     }
 }

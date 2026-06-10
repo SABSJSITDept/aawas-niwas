@@ -97,18 +97,18 @@
                 <div class="p-4 flex flex-col flex-grow">
                     <p class="text-xs text-slate-500 leading-relaxed mb-4 font-['Noto_Sans_Devanagari']">बुकिंग और सामान्य प्रश्नों के लिए समर्पित टीम से संपर्क करें।</p>
                     <div class="flex flex-col gap-3 mb-4">
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
-                            <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">प्रतिनिधि 3</span>
-                            <a href="tel:+919876543212" class="inline-flex items-center justify-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="bi bi-telephone-fill"></i> 98765 43212
-                            </a>
-                        </div>
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
-                            <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">प्रतिनिधि 4</span>
-                            <a href="tel:+919876543213" class="inline-flex items-center justify-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="bi bi-telephone-fill"></i> 98765 43213  
-                            </a>
-                        </div>
+                        @if(isset($helplines['सामान्य सहायता']))
+                            @foreach($helplines['सामान्य सहायता'] as $helpline)
+                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+                                <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">{{ $helpline->representative_name }}</span>
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $helpline->number) }}" class="inline-flex items-center justify-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                                    <i class="bi bi-telephone-fill"></i> {{ $helpline->number }}
+                                </a>
+                            </div>
+                            @endforeach
+                        @else
+                            <span class="text-xs text-slate-400">कोई नंबर उपलब्ध नहीं है।</span>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -128,18 +128,18 @@
                 <div class="p-4 flex flex-col flex-grow">
                     <p class="text-xs text-slate-500 leading-relaxed mb-4 font-['Noto_Sans_Devanagari']">तत्काल चिकित्सा या आपातकालीन स्थिति में 24/7 उपलब्ध प्रतिनिधि।</p>
                     <div class="flex flex-col gap-3 mb-4">
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
-                            <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">प्रतिनिधि 5</span>
-                            <a href="tel:+919876543214" class="inline-flex items-center justify-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="bi bi-telephone-fill"></i> 98765 43214
-                            </a>
-                        </div>
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
-                            <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">प्रतिनिधि 6</span>
-                            <a href="tel:+919876543215" class="inline-flex items-center justify-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="bi bi-telephone-fill"></i> 98765 43215
-                            </a>
-                        </div>
+                        @if(isset($helplines['आपातकालीन सहायता']))
+                            @foreach($helplines['आपातकालीन सहायता'] as $helpline)
+                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+                                <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">{{ $helpline->representative_name }}</span>
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $helpline->number) }}" class="inline-flex items-center justify-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                                    <i class="bi bi-telephone-fill"></i> {{ $helpline->number }}
+                                </a>
+                            </div>
+                            @endforeach
+                        @else
+                            <span class="text-xs text-slate-400">कोई नंबर उपलब्ध नहीं है।</span>
+                        @endif
                     </div>
                     <div class="mt-auto pt-3 border-t border-red-50 flex items-center gap-2 text-[11px] text-slate-500 font-['Noto_Sans_Devanagari']">
                         <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full font-['Inter']">
@@ -164,18 +164,18 @@
                 <div class="p-4 flex flex-col flex-grow">
                     <p class="text-xs text-slate-500 leading-relaxed mb-4 font-['Noto_Sans_Devanagari']">स्वास्थ्य संबंधी सेवाएं, चिकित्सा परामर्श और आपातकालीन चिकित्सा सहायता।</p>
                     <div class="flex flex-col gap-3 mb-4">
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
-                            <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">प्रतिनिधि 7</span>
-                            <a href="tel:+919876543216" class="inline-flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="bi bi-telephone-fill"></i> 98765 43216
-                            </a>
-                        </div>
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
-                            <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">प्रतिनिधि 8</span>
-                            <a href="tel:+919876543217" class="inline-flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="bi bi-telephone-fill"></i> 98765 43217
-                            </a>
-                        </div>
+                        @if(isset($helplines['चिकित्सा सेवा']))
+                            @foreach($helplines['चिकित्सा सेवा'] as $helpline)
+                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+                                <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">{{ $helpline->representative_name }}</span>
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $helpline->number) }}" class="inline-flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                                    <i class="bi bi-telephone-fill"></i> {{ $helpline->number }}
+                                </a>
+                            </div>
+                            @endforeach
+                        @else
+                            <span class="text-xs text-slate-400">कोई नंबर उपलब्ध नहीं है।</span>
+                        @endif
                     </div>
                     <div class="mt-auto pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500 font-['Noto_Sans_Devanagari']">
                         <i class="bi bi-circle-fill text-rose-500 text-[6px]"></i> 24/7 चिकित्सा सहायता
@@ -197,12 +197,18 @@
                 <div class="p-4 flex flex-col flex-grow">
                     <p class="text-xs text-slate-500 leading-relaxed mb-4 font-['Noto_Sans_Devanagari']">त्वरित चैट, फ़ोटो या दस्तावेज़ साझा करने की सुविधा के साथ 24/7 संपर्क करें।</p>
                     <div class="flex flex-col gap-3 mb-4">
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
-                            <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">प्रतिनिधि 9</span>
-                            <a href="https://wa.me/919876543218" target="_blank" class="inline-flex items-center justify-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="bi bi-whatsapp"></i> 98765 43218
-                            </a>
-                        </div>
+                        @if(isset($helplines['व्हाट्सएप संपर्क']))
+                            @foreach($helplines['व्हाट्सएप संपर्क'] as $helpline)
+                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+                                <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">{{ $helpline->representative_name }}</span>
+                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $helpline->number) }}" target="_blank" class="inline-flex items-center justify-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                                    <i class="bi bi-whatsapp"></i> {{ $helpline->number }}
+                                </a>
+                            </div>
+                            @endforeach
+                        @else
+                            <span class="text-xs text-slate-400">कोई नंबर उपलब्ध नहीं है।</span>
+                        @endif
                     </div>
                     <div class="mt-auto pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500 font-['Noto_Sans_Devanagari']">
                         <i class="bi bi-circle-fill text-emerald-500 text-[6px]"></i> 24/7 व्हाट्सएप उपलब्ध
@@ -224,12 +230,18 @@
                 <div class="p-4 flex flex-col flex-grow">
                     <p class="text-xs text-slate-500 leading-relaxed mb-4 font-['Noto_Sans_Devanagari']">किसी भी प्रकार की प्रशासनिक सहायता के लिए कार्यालय से संपर्क करें।</p>
                     <div class="flex flex-col gap-3 mb-4">
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
-                            <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">प्रतिनिधि 10</span>
-                            <a href="tel:+919876543219" class="inline-flex items-center justify-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="bi bi-telephone-fill"></i> 98765 43219
-                            </a>
-                        </div>
+                        @if(isset($helplines['कार्यालय संपर्क']))
+                            @foreach($helplines['कार्यालय संपर्क'] as $helpline)
+                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+                                <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">{{ $helpline->representative_name }}</span>
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $helpline->number) }}" class="inline-flex items-center justify-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                                    <i class="bi bi-telephone-fill"></i> {{ $helpline->number }}
+                                </a>
+                            </div>
+                            @endforeach
+                        @else
+                            <span class="text-xs text-slate-400">कोई नंबर उपलब्ध नहीं है।</span>
+                        @endif
                     </div>
                     
                     <div class="mt-auto pt-3 border-t border-slate-100">
@@ -259,12 +271,18 @@
                 <div class="p-4 flex flex-col flex-grow">
                     <p class="text-xs text-slate-500 leading-relaxed mb-4 font-['Noto_Sans_Devanagari']">भोजन व्यवस्था, भोजनशाला समय-सारिणी एवं विशेष आहार संबंधी प्रश्नों के लिए संपर्क करें।</p>
                     <div class="flex flex-col gap-3 mb-4">
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
-                            <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">प्रतिनिधि 11</span>
-                            <a href="tel:+919876543220" class="inline-flex items-center justify-center gap-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="bi bi-telephone-fill"></i> 98765 43220
-                            </a>
-                        </div>
+                        @if(isset($helplines['भोजनशाला संपर्क']))
+                            @foreach($helplines['भोजनशाला संपर्क'] as $helpline)
+                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+                                <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">{{ $helpline->representative_name }}</span>
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $helpline->number) }}" class="inline-flex items-center justify-center gap-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                                    <i class="bi bi-telephone-fill"></i> {{ $helpline->number }}
+                                </a>
+                            </div>
+                            @endforeach
+                        @else
+                            <span class="text-xs text-slate-400">कोई नंबर उपलब्ध नहीं है।</span>
+                        @endif
                     </div>
                     <div class="mt-auto pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500 font-['Noto_Sans_Devanagari']">
                         <i class="bi bi-clock text-slate-400"></i> भोजन समय अनुसार उपलब्ध
@@ -286,12 +304,18 @@
                 <div class="p-4 flex flex-col flex-grow">
                     <p class="text-xs text-slate-500 leading-relaxed mb-4 font-['Noto_Sans_Devanagari']">यात्रा व्यवस्था, बस-शटल टाइमिंग एवं स्थानांतरण सहायता के लिए संपर्क करें।</p>
                     <div class="flex flex-col gap-3 mb-4">
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
-                            <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">प्रतिनिधि 12</span>
-                            <a href="tel:+919876543221" class="inline-flex items-center justify-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="bi bi-telephone-fill"></i> 98765 43221
-                            </a>
-                        </div>
+                        @if(isset($helplines['परिवहन']))
+                            @foreach($helplines['परिवहन'] as $helpline)
+                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+                                <span class="text-[14px] font-semibold text-slate-800 font-['Noto_Sans_Devanagari']">{{ $helpline->representative_name }}</span>
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $helpline->number) }}" class="inline-flex items-center justify-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                                    <i class="bi bi-telephone-fill"></i> {{ $helpline->number }}
+                                </a>
+                            </div>
+                            @endforeach
+                        @else
+                            <span class="text-xs text-slate-400">कोई नंबर उपलब्ध नहीं है।</span>
+                        @endif
                     </div>
                     <div class="mt-auto pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500 font-['Noto_Sans_Devanagari']">
                         <i class="bi bi-clock text-slate-400"></i> यात्रा समय अनुसार उपलब्ध

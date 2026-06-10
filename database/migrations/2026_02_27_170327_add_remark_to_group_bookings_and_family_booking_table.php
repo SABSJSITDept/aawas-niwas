@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('group_bookings', function (Blueprint $table) {
-            $table->text('remark')->nullable()->after('booking_id');
+            $table->text('remark')->nullable();
         });
 
         Schema::table('family_booking', function (Blueprint $table) {
-            $table->text('remark')->nullable()->after('booking_id');
+            $table->text('remark')->nullable();
         });
     }
 

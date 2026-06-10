@@ -73,12 +73,14 @@ Route::get('/parking', [ParkingController::class, 'index'])->name('parking');
 
 // Location page
 Route::get('/location', function () {
-    return view('location');
+    $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
+    return view('location', compact('settings'));
 })->name('location.show');
 
 // Helpline numbers
 Route::get('/helpline-numbers', function () {
-    return view('helpline-numbers');
+    $helplines = \App\Models\Helpline::where('status', true)->get()->groupBy('category');
+    return view('helpline-numbers', compact('helplines'));
 })->name('helpline-numbers');
 
 // Public Bhojanshala page
@@ -279,6 +281,29 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/sadhu-sadvi/show', function () {
         return view('admin.sadhu-sadvi.show');
     })->name('admin.sadhu-sadvi.show');
+
+    // --- Dynamic Content Admin ---
+    // Settings
+    Route::get('/admin/settings', [\App\Http\Controllers\Admin\SiteSettingController::class, 'index'])->name('admin.settings.index');
+    Route::post('/admin/settings', [\App\Http\Controllers\Admin\SiteSettingController::class, 'store'])->name('admin.settings.store');
+
+    // Helplines
+    Route::get('/admin/helplines', [\App\Http\Controllers\Admin\HelplineAdminController::class, 'index'])->name('admin.helplines.index');
+    Route::get('/admin/helplines/create', [\App\Http\Controllers\Admin\HelplineAdminController::class, 'create'])->name('admin.helplines.create');
+    Route::post('/admin/helplines', [\App\Http\Controllers\Admin\HelplineAdminController::class, 'store'])->name('admin.helplines.store');
+    Route::get('/admin/helplines/{helpline}/edit', [\App\Http\Controllers\Admin\HelplineAdminController::class, 'edit'])->name('admin.helplines.edit');
+    Route::put('/admin/helplines/{helpline}', [\App\Http\Controllers\Admin\HelplineAdminController::class, 'update'])->name('admin.helplines.update');
+    Route::delete('/admin/helplines/{helpline}', [\App\Http\Controllers\Admin\HelplineAdminController::class, 'destroy'])->name('admin.helplines.destroy');
+    Route::patch('/admin/helplines/{helpline}/toggle', [\App\Http\Controllers\Admin\HelplineAdminController::class, 'toggle'])->name('admin.helplines.toggle');
+
+    // Parking
+    Route::get('/admin/parking', [\App\Http\Controllers\Admin\ParkingAdminController::class, 'index'])->name('admin.parking.index');
+    Route::get('/admin/parking/create', [\App\Http\Controllers\Admin\ParkingAdminController::class, 'create'])->name('admin.parking.create');
+    Route::post('/admin/parking', [\App\Http\Controllers\Admin\ParkingAdminController::class, 'store'])->name('admin.parking.store');
+    Route::get('/admin/parking/{parking}/edit', [\App\Http\Controllers\Admin\ParkingAdminController::class, 'edit'])->name('admin.parking.edit');
+    Route::put('/admin/parking/{parking}', [\App\Http\Controllers\Admin\ParkingAdminController::class, 'update'])->name('admin.parking.update');
+    Route::delete('/admin/parking/{parking}', [\App\Http\Controllers\Admin\ParkingAdminController::class, 'destroy'])->name('admin.parking.destroy');
+    Route::patch('/admin/parking/{parking}/toggle', [\App\Http\Controllers\Admin\ParkingAdminController::class, 'toggle'])->name('admin.parking.toggle');
 
 }); // END auth middleware group
 require __DIR__.'/auth.php';

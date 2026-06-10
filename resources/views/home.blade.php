@@ -270,19 +270,18 @@
                 <p class="text-slate-600 mb-6 font-medium text-sm font-['Noto_Sans_Devanagari']">आपातकालीन स्थिति में कृपया तुरंत नीचे दिए गए नंबरों पर संपर्क करें:</p>
                 
                 <div class="space-y-4">
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 border-l-4 border-l-red-500 hover:bg-red-50/30 transition-colors">
-                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">#####</div>
-                        <a href="tel:**********" class="text-red-600 hover:text-red-700 font-bold text-lg flex items-center gap-2 transition-colors">
-                            <i class="bi bi-telephone-fill"></i> **********
-                        </a>
-                    </div>
-                    
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 border-l-4 border-l-red-500 hover:bg-red-50/30 transition-colors">
-                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">#######</div>
-                        <a href="tel:**********" class="text-red-600 hover:text-red-700 font-bold text-lg flex items-center gap-2 transition-colors">
-                            <i class="bi bi-telephone-fill"></i> **********
-                        </a>
-                    </div>
+                    @if(isset($medicalHelplines) && $medicalHelplines->count() > 0)
+                        @foreach($medicalHelplines as $helpline)
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 border-l-4 border-l-red-500 hover:bg-red-50/30 transition-colors">
+                            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{{ $helpline->representative_name }}</div>
+                            <a href="{{ $helpline->type == 'whatsapp' ? 'https://wa.me/' . preg_replace('/[^0-9]/', '', $helpline->number) : 'tel:' . preg_replace('/[^0-9+]/', '', $helpline->number) }}" class="text-red-600 hover:text-red-700 font-bold text-lg flex items-center gap-2 transition-colors" {{ $helpline->type == 'whatsapp' ? 'target="_blank"' : '' }}>
+                                <i class="bi {{ $helpline->type == 'whatsapp' ? 'bi-whatsapp' : 'bi-telephone-fill' }}"></i> {{ $helpline->number }}
+                            </a>
+                        </div>
+                        @endforeach
+                    @else
+                        <p class="text-slate-500 text-sm">अभी कोई नंबर उपलब्ध नहीं है।</p>
+                    @endif
                 </div>
             </div>
             <div class="p-4 border-t border-slate-100 bg-slate-50">
