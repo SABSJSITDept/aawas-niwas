@@ -11,7 +11,11 @@ class Form extends Model
     protected $fillable = [
         'name',  'phone', 'mid',  'aadhar_number', 'city', 'state', 
         'aanchal', 'department', 'post', 'is_coming', 'travel_type', 
-        'check_in_date', 'check_out_date', 'check_in_time', 'check_out_time','stay_arrangement','status' 
+        'check_in_date', 'check_out_date', 'check_in_time', 'check_out_time','stay_arrangement','status', 'extra_fields'
+    ];
+
+    protected $casts = [
+        'extra_fields' => 'array',
     ];
     // public function bookedRoom()
     // {

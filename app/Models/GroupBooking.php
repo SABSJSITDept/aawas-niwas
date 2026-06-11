@@ -36,7 +36,13 @@ class GroupBooking extends Model
         'sixty_plus_female',
         'booking_id',
         'remark',
+        'extra_fields',
     ];
+
+    protected $casts = [
+        'extra_fields' => 'array',
+    ];
+
     public function groupMembers()
     {
         return $this->hasMany(GroupMember::class);

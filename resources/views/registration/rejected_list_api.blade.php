@@ -184,6 +184,9 @@ const DB_COLUMNS = [
     { key: 'is_veer_parivar', exportKey: 'is_veer_parivar', label: 'Veer Parivar', defaultVisible: false, filterable: true, type: 'select', options: ['yes', 'no'] },
     { key: 'remark', exportKey: 'remark', label: 'Remark', defaultVisible: false, filterable: true, type: 'text' },
     { key: 'status', label: 'Status', defaultVisible: true, filterable: false },
+    @foreach(\App\Models\DynamicField::where('status', true)->get() as $df)
+    { key: 'extra_{{ $df->name }}', exportKey: 'extra_{{ $df->name }}', label: '{{ addslashes($df->label) }}', defaultVisible: false, filterable: true, type: '{{ in_array($df->type, ["select", "radio", "checkbox"]) ? "select" : "text" }}' {{ in_array($df->type, ["select", "radio", "checkbox"]) && $df->options ? ", options: " . json_encode($df->options) : "" }} },
+    @endforeach
     { key: 'actions', label: 'Action', defaultVisible: true, filterable: false }
 ];
 
@@ -300,6 +303,13 @@ function renderTable(data){
             else if (col.key === 'city') val = row.city_name ?? row.city ?? '';
             else if (col.key === 'state') val = row.state_name ?? row.state ?? '';
             else if (col.key === 'aanchal') val = row.aanchal_name ?? row.aanchal ?? '';
+            else if (col.key.startsWith('extra_')) {
+                let extraObj = row.extra_fields || {};
+                if (typeof extraObj === 'string') {
+                    try { extraObj = JSON.parse(extraObj); } catch(e) { extraObj = {}; }
+                }
+                val = extraObj[col.key.substring(6)] ?? '';
+            }
             else val = row[col.key] ?? '-';
             
             html += `<td data-col-idx="${idx}">${val}</td>`;

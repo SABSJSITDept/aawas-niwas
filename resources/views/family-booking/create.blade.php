@@ -382,6 +382,45 @@
 ">
 </div>
 
+@if(isset($dynamicFields) && count($dynamicFields) > 0)
+    <div id="dynamic-fields-container" style="display: none;">
+        @foreach($dynamicFields as $field)
+            <div class="col-md-3 mb-3 dynamic-field-wrapper" data-order="{{ $field->order }}">
+                <label class="form-label fw-semibold">{{ $field->label }} @if($field->is_required) <span style="color: red;">*</span> @endif</label>
+                @if($field->type == 'text')
+                    <input type="text" name="extra_fields[{{ $field->name }}]" class="form-control" placeholder="{{ $field->label }}" @if($field->is_required) required @endif>
+                @elseif($field->type == 'number')
+                    <input type="number" name="extra_fields[{{ $field->name }}]" class="form-control" placeholder="{{ $field->label }}" @if($field->is_required) required @endif>
+                @elseif($field->type == 'email')
+                    <input type="email" name="extra_fields[{{ $field->name }}]" class="form-control" placeholder="{{ $field->label }}" @if($field->is_required) required @endif>
+                @elseif($field->type == 'date')
+                    <input type="date" name="extra_fields[{{ $field->name }}]" class="form-control" @if($field->is_required) required @endif>
+                @elseif($field->type == 'select')
+                    <select name="extra_fields[{{ $field->name }}]" class="form-select" @if($field->is_required) required @endif>
+                        <option value="">-- चुनें --</option>
+                        @if(is_array($field->options))
+                            @foreach($field->options as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
+                            @endforeach
+                        @endif
+                    </select>
+                @elseif($field->type == 'radio' || $field->type == 'checkbox')
+                    <div class="d-flex flex-wrap gap-3 mt-1">
+                        @if(is_array($field->options))
+                            @foreach($field->options as $option)
+                                <div class="form-check">
+                                    <input class="form-check-input" type="{{ $field->type }}" name="extra_fields[{{ $field->name }}]{{ $field->type == 'checkbox' ? '[]' : '' }}" value="{{ $option }}" id="field_{{ $field->id }}_{{ $loop->index }}" @if($field->is_required) required @endif>
+                                    <label class="form-check-label" for="field_{{ $field->id }}_{{ $loop->index }}">{{ $option }}</label>
+                                </div>
+                            @endforeach
+                        @endif
+                    </div>
+                @endif
+            </div>
+        @endforeach
+    </div>
+@endif
+
             </div> <!-- End Step 1 row -->
             <div class="mt-4 text-end">
                 <button type="button" class="btn btn-primary px-4 py-2" onclick="nextStep(1)">Next &rarr;</button>
@@ -1466,6 +1505,73 @@ checkoutInput.addEventListener("change", function () {
             $("#hiddenFields").addClass("hidden");
             $("#extraInfo").prop("required", false);
         }
+        function clearErrors() {
+            $(".is-invalid").removeClass("is-invalid");
+            $(".invalid-feedback").remove();
+        }
+    });
+
+    $(document).ready(function() {
+        const staticFieldsMapping = {
+            'name': 100,
+            'father_name': 200,
+            'age': 300,
+            'gender': 400,
+            'phone': 500,
+            'aadhar_number': 600,
+            'mid': 700,
+            'city': 800,
+            'state': 900,
+            'aanchal': 1000,
+            'is_veer_parivar': 1100,
+            'veer_relation': 1200,
+            'ms_name': 1300,
+            'family_coming': 1400,
+            'no_of_children': 1500,
+            'total_male': 1600,
+            'total_female': 1700,
+            'travel_type': 1800,
+            'check_in_date': 1900,
+            'check_in_time': 2000,
+            'check_out_date': 2100,
+            'check_out_time': 2200,
+            'remark': 2300
+        };
+
+        // Tag static wrappers
+        for (let key in staticFieldsMapping) {
+            let input = $(`[name="${key}"]`);
+            if (input.length) {
+                let wrapper = input.closest('.col-md-3, .col-md-4, .col-md-6, .col-md-12');
+                wrapper.addClass('static-wrapper').attr('data-order', staticFieldsMapping[key]);
+            }
+        }
+
+        // Place dynamic fields
+        $('.dynamic-field-wrapper').each(function() {
+            let order = $(this).data('order');
+            let closestStatic = null;
+            let closestDiff = Infinity;
+            
+            $('.static-wrapper').each(function() {
+                let staticOrder = $(this).data('order');
+                if (staticOrder < order && (order - staticOrder) < closestDiff) {
+                    closestDiff = order - staticOrder;
+                    closestStatic = $(this);
+                }
+            });
+            
+            if (closestStatic) {
+                $(this).insertAfter(closestStatic);
+            } else {
+                // If it should be placed before the very first static field
+                let firstStatic = $('.static-wrapper').first();
+                if (firstStatic.length) {
+                    $(this).insertBefore(firstStatic);
+                }
+            }
+            $(this).show();
+        });
     });
 
     $("#submitButton").on("click", function (e) {

@@ -37,7 +37,13 @@ class FamilyBooking extends Model
         'veer_relation',
         'booking_id',
         'remark',
+        'extra_fields',
     ];
+
+    protected $casts = [
+        'extra_fields' => 'array',
+    ];
+
     public function familyMembers()
 {
     return $this->hasMany(FamilyMember::class, 'family_id',);

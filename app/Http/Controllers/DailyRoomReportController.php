@@ -38,6 +38,16 @@ public function show(Request $request)
 
             $booked = BookedRoom::where('hotel_id', $category->hotel_id)
                 ->whereRaw('LOWER(TRIM(room_number)) = ?', [strtolower($room)])
+                ->where(function($q) use ($today) {
+                    $q->where(function($q2) use ($today) {
+                        $q2->whereDate('check_in_date', '<=', $today)
+                           ->whereDate('check_out_date', '>=', $today);
+                    })
+                    ->orWhere(function($q3) use ($today) {
+                        $q3->whereDate('check_in_date', '<=', $today)
+                           ->whereNull('check_out_date');
+                    });
+                })
                 ->sum('total_capacity');
 
             if ($booked > 0) {
@@ -205,6 +215,16 @@ public function show(Request $request)
 
                 $booked = BookedRoom::where('hotel_id', $category->hotel_id)
                     ->whereRaw('LOWER(TRIM(room_number)) = ?', [strtolower($room)])
+                    ->where(function($q) use ($today) {
+                        $q->where(function($q2) use ($today) {
+                            $q2->whereDate('check_in_date', '<=', $today)
+                               ->whereDate('check_out_date', '>=', $today);
+                        })
+                        ->orWhere(function($q3) use ($today) {
+                            $q3->whereDate('check_in_date', '<=', $today)
+                               ->whereNull('check_out_date');
+                        });
+                    })
                     ->sum('total_capacity');
 
                 if ($booked > 0) {

@@ -22,7 +22,12 @@ class GroupBookingController extends Controller
     // Show all bookings form 
     public function index()
     {
-        return view('group-booking');
+        $dynamicFields = \App\Models\DynamicField::where('form_type', 'group')
+                            ->where('status', true)
+                            ->orderBy('order', 'asc')
+                            ->orderBy('id', 'asc')
+                            ->get();
+        return view('group-booking', compact('dynamicFields'));
     }
     public function getMembers($id)
     {
@@ -246,6 +251,7 @@ public function store(Request $request)
             'sixty_plus_female' => $validatedData['sixty_plus_female'] ?? 0,
             'total_persons' => $totalPersons,
             'remark' => $validatedData['remark'] ?? null,
+            'extra_fields' => $request->extra_fields ?? null,
             // booking_id will be set after we get the id
         ]);
 

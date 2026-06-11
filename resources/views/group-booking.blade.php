@@ -247,6 +247,46 @@
         <div id="aanchalLoader" class="loader" style="display: none;"></div>
     </div>
 </div>
+
+@if(isset($dynamicFields) && count($dynamicFields) > 0)
+    <div id="dynamic-fields-container" style="display: none;">
+        @foreach($dynamicFields as $field)
+            <div class="col-md-3 mb-3 dynamic-field-wrapper" data-order="{{ $field->order }}">
+                <label class="form-label fw-semibold">{{ $field->label }} @if($field->is_required) <span style="color: red;">*</span> @endif</label>
+                @if($field->type == 'text')
+                    <input type="text" name="extra_fields[{{ $field->name }}]" class="form-control" placeholder="{{ $field->label }}" @if($field->is_required) required @endif>
+                @elseif($field->type == 'number')
+                    <input type="number" name="extra_fields[{{ $field->name }}]" class="form-control" placeholder="{{ $field->label }}" @if($field->is_required) required @endif>
+                @elseif($field->type == 'email')
+                    <input type="email" name="extra_fields[{{ $field->name }}]" class="form-control" placeholder="{{ $field->label }}" @if($field->is_required) required @endif>
+                @elseif($field->type == 'date')
+                    <input type="date" name="extra_fields[{{ $field->name }}]" class="form-control" @if($field->is_required) required @endif>
+                @elseif($field->type == 'select')
+                    <select name="extra_fields[{{ $field->name }}]" class="form-select" @if($field->is_required) required @endif>
+                        <option value="">-- चुनें --</option>
+                        @if(is_array($field->options))
+                            @foreach($field->options as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
+                            @endforeach
+                        @endif
+                    </select>
+                @elseif($field->type == 'radio' || $field->type == 'checkbox')
+                    <div class="d-flex flex-wrap gap-3 mt-1">
+                        @if(is_array($field->options))
+                            @foreach($field->options as $option)
+                                <div class="form-check">
+                                    <input class="form-check-input" type="{{ $field->type }}" name="extra_fields[{{ $field->name }}]{{ $field->type == 'checkbox' ? '[]' : '' }}" value="{{ $option }}" id="field_{{ $field->id }}_{{ $loop->index }}" @if($field->is_required) required @endif>
+                                    <label class="form-check-label" for="field_{{ $field->id }}_{{ $loop->index }}">{{ $option }}</label>
+                                </div>
+                            @endforeach
+                        @endif
+                    </div>
+                @endif
+            </div>
+        @endforeach
+    </div>
+@endif
+
                 </div> <!-- End Step 1 row -->
                 <div class="mt-4 text-end">
                     <button type="button" class="btn btn-primary px-4 py-2" onclick="nextStep(1)">Next &rarr;</button>
@@ -969,13 +1009,68 @@ $(document).on('blur', '.name-field', function () {
 
 
    $(document).ready(function() {
+        const staticFieldsMapping = {
+            'name': 100,
+            'phone': 200,
+            'aadhar_number': 300,
+            'mid': 400,
+            'city': 500,
+            'state': 600,
+            'aanchal': 700,
+            'total_members': 800,
+            'total_male': 900,
+            'total_female': 1000,
+            'child_count': 1100,
+            'travel_type': 1200,
+            'check_in_date': 1300,
+            'check_in_time': 1400,
+            'check_out_date': 1500,
+            'check_out_time': 1600,
+            'remark': 1700
+        };
+
+        // Tag static wrappers
+        for (let key in staticFieldsMapping) {
+            let input = $(`[name="${key}"]`);
+            if (input.length) {
+                let wrapper = input.closest('.col-md-3, .col-md-4, .col-md-6, .col-md-12');
+                wrapper.addClass('static-wrapper').attr('data-order', staticFieldsMapping[key]);
+            }
+        }
+
+        // Place dynamic fields
+        $('.dynamic-field-wrapper').each(function() {
+            let order = $(this).data('order');
+            let closestStatic = null;
+            let closestDiff = Infinity;
+            
+            $('.static-wrapper').each(function() {
+                let staticOrder = $(this).data('order');
+                if (staticOrder < order && (order - staticOrder) < closestDiff) {
+                    closestDiff = order - staticOrder;
+                    closestStatic = $(this);
+                }
+            });
+            
+            if (closestStatic) {
+                $(this).insertAfter(closestStatic);
+            } else {
+                // If it should be placed before the very first static field
+                let firstStatic = $('.static-wrapper').first();
+                if (firstStatic.length) {
+                    $(this).insertBefore(firstStatic);
+                }
+            }
+            $(this).show();
+        });
+
+        $("#submitButton").on("click", function (e) {
         // Restrict numbers from being entered in the Father Name field
         $('#father_name').on('input', function() {
             var inputValue = $(this).val();
             // Replace any number with an empty string
             $(this).val(inputValue.replace(/[0-9]/g, ''));
         });
-    });
 
 
             // 🌆 When City is selected - auto-fill state & anchal from cached data

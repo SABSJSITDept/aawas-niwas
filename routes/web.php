@@ -37,7 +37,8 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Public forms
 Route::get('/other_form', function () {
-    return view('other_form');
+    $dynamicFields = \App\Models\DynamicField::where('form_type', 'other')->where('status', true)->get();
+    return view('other_form', compact('dynamicFields'));
 })->name('other_form');
 Route::post('/submit-form', [FormController::class, 'store']);
 Route::post('/submit-travel-form', [FormController::class, 'storeTravel']);
@@ -286,6 +287,12 @@ Route::middleware('auth')->group(function () {
     // Settings
     Route::get('/admin/settings', [\App\Http\Controllers\Admin\SiteSettingController::class, 'index'])->name('admin.settings.index');
     Route::post('/admin/settings', [\App\Http\Controllers\Admin\SiteSettingController::class, 'store'])->name('admin.settings.store');
+
+    // Dynamic Fields (Form Builder)
+    Route::get('/admin/dynamic-fields', [\App\Http\Controllers\Admin\DynamicFieldController::class, 'index'])->name('admin.dynamic-fields.index');
+    Route::post('/admin/dynamic-fields', [\App\Http\Controllers\Admin\DynamicFieldController::class, 'store'])->name('admin.dynamic-fields.store');
+    Route::patch('/admin/dynamic-fields/{id}/toggle', [\App\Http\Controllers\Admin\DynamicFieldController::class, 'toggle'])->name('admin.dynamic-fields.toggle');
+    Route::delete('/admin/dynamic-fields/{id}', [\App\Http\Controllers\Admin\DynamicFieldController::class, 'destroy'])->name('admin.dynamic-fields.destroy');
 
     // Helplines
     Route::get('/admin/helplines', [\App\Http\Controllers\Admin\HelplineAdminController::class, 'index'])->name('admin.helplines.index');

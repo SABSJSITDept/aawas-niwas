@@ -539,6 +539,9 @@ $(function(){
         { key: 'sixty_plus_female', exportKey: 'sixty_plus_female', label: '60+ Female', defaultVisible: false, filterable: true, type: 'text' },
         { key: 'is_veer_parivar', exportKey: 'is_veer_parivar', label: 'Veer Parivar', defaultVisible: false, filterable: true, type: 'select', options: ['yes', 'no'] },
         { key: 'remark', exportKey: 'remark', label: 'Remark', defaultVisible: false, filterable: true, type: 'text' },
+        @foreach(\App\Models\DynamicField::where('status', true)->get() as $df)
+        { key: 'extra_{{ $df->name }}', exportKey: 'extra_{{ $df->name }}', label: '{{ addslashes($df->label) }}', defaultVisible: false, filterable: true, type: '{{ in_array($df->type, ["select", "radio", "checkbox"]) ? "select" : "text" }}' {{ in_array($df->type, ["select", "radio", "checkbox"]) && $df->options ? ", options: " . json_encode($df->options) : "" }} },
+        @endforeach
         { key: 'actions', label: 'Actions', defaultVisible: true, filterable: false }
     ];
 
@@ -679,6 +682,13 @@ $(function(){
                         val = `<div><small><strong>In:</strong> ${ci}</small><br><small><strong>Out:</strong> ${co}</small></div>`;
                     }
                     else if (col.key === 'aanchal') val = getAanchal(b.aanchal);
+                    else if (col.key.startsWith('extra_')) {
+                        let extraObj = b.extra_fields || {};
+                        if (typeof extraObj === 'string') {
+                            try { extraObj = JSON.parse(extraObj); } catch(e) { extraObj = {}; }
+                        }
+                        val = extraObj[col.key.substring(6)] ?? '';
+                    }
                     else val = b[col.key] ?? '';
                     
                     trHtml += `<td style="${style}" data-col-idx="${idx}">${val}</td>`;

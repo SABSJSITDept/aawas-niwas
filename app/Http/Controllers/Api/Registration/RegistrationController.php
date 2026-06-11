@@ -176,6 +176,17 @@ class RegistrationController extends Controller
             }
         }
 
+        // Apply filters for dynamic extra fields
+        $dynamicFields = \App\Models\DynamicField::where('status', true)->get();
+        foreach ($dynamicFields as $df) {
+            $value = $request->get("filter_extra_{$df->name}");
+            if ($value !== null && $value !== '') {
+                // Laravel 5.7+ JSON where syntax: where('column->key', 'value')
+                $familyQuery->where("extra_fields->{$df->name}", 'like', "%{$value}%");
+                $groupQuery->where("extra_fields->{$df->name}", 'like', "%{$value}%");
+            }
+        }
+
         $filter_type = $request->get('filter_type');
         if ($filter_type === 'family') {
             $groupQuery->whereRaw('1 = 0');
@@ -611,6 +622,12 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                 'total_persons' => 'Total Persons'
             ];
 
+            // Fetch dynamic fields
+            $dynamicFields = \App\Models\DynamicField::where('status', true)->get();
+            foreach ($dynamicFields as $df) {
+                $allColumnsMap['extra_' . $df->name] = $df->label;
+            }
+
             // If no visible columns sent, default to all
             if (empty($visibleColumnsKeys) || !is_array($visibleColumnsKeys)) {
                 $visibleColumnsKeys = array_keys($allColumnsMap);
@@ -625,7 +642,7 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
 
             // prepare flat rows — pick only the columns you specified
             // Ensure all strings are properly UTF-8 encoded
-            $rows = $data->map(function($row) use ($visibleColumnsKeys) {
+            $rows = $data->map(function($row) use ($visibleColumnsKeys, $dynamicFields) {
                 $ensureUtf8 = function($value) {
                     if (!is_string($value)) return $value;
                     // Check if already UTF-8, if not convert
@@ -654,6 +671,14 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                     'check_out_time' => $ensureUtf8($row['check_out_time'] ?? ''),
                     'total_persons' => $ensureUtf8($row['total_persons'] ?? '')
                 ];
+
+                $extraData = $row['extra_fields'] ?? [];
+                if (is_string($extraData)) {
+                    $extraData = json_decode($extraData, true) ?? [];
+                }
+                foreach ($dynamicFields as $df) {
+                    $fullRow['extra_' . $df->name] = $ensureUtf8($extraData[$df->name] ?? '');
+                }
 
                 $filteredRow = [];
                 foreach ($visibleColumnsKeys as $key) {
@@ -1013,6 +1038,11 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                 'allotment_info' => 'Allotment Info'
             ];
 
+            $dynamicFields = \App\Models\DynamicField::where('status', true)->get();
+            foreach ($dynamicFields as $df) {
+                $allColumnsMap['extra_' . $df->name] = $df->label;
+            }
+
             if (empty($visibleColumnsKeys) || !is_array($visibleColumnsKeys)) {
                 $visibleColumnsKeys = array_keys($allColumnsMap);
             }
@@ -1058,6 +1088,14 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                     'total_persons' => $row['total_persons'] ?? '',
                     'allotment_info' => $row['allotment_info'] ?? ''
                 ];
+                
+                $extraData = $row['extra_fields'] ?? [];
+                if (is_string($extraData)) {
+                    $extraData = json_decode($extraData, true) ?? [];
+                }
+                foreach ($dynamicFields as $df) {
+                    $fullRow['extra_' . $df->name] = $extraData[$df->name] ?? '';
+                }
                 
                 $filteredRow = [];
                 foreach ($visibleColumnsKeys as $key) {
@@ -1182,9 +1220,44 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
 
             $data = $families->merge($groups);
 
+            $visibleColumnsKeys = $request->get('visible_columns');
+            $allColumnsMap = [
+                'type' => 'Type',
+                'booking_id' => 'Booking ID',
+                'name' => 'Name',
+                'father_name' => 'Father Name',
+                'phone' => 'Phone',
+                'aadhar_number' => 'Aadhar Number',
+                'age' => 'Age',
+                'mid' => 'MID',                
+                'city' => 'City',
+                'state' => 'State',
+                'aanchal' => 'Aanchal',
+                'travel_type' => 'Travel Type',
+                'check_in_date' => 'Check-in Date',
+                'check_out_date' => 'Check-out Date',
+                'total_persons' => 'Total Persons'
+            ];
+
+            $dynamicFields = \App\Models\DynamicField::where('status', true)->get();
+            foreach ($dynamicFields as $df) {
+                $allColumnsMap['extra_' . $df->name] = $df->label;
+            }
+
+            if (empty($visibleColumnsKeys) || !is_array($visibleColumnsKeys)) {
+                $visibleColumnsKeys = array_keys($allColumnsMap);
+            }
+
+            $exportHeadings = [];
+            foreach ($visibleColumnsKeys as $key) {
+                if (isset($allColumnsMap[$key])) {
+                    $exportHeadings[] = $allColumnsMap[$key];
+                }
+            }
+
             // Prepare flat rows for export - only required columns
-            $rows = $data->map(function($row){
-                return [
+            $rows = $data->map(function($row) use ($visibleColumnsKeys, $dynamicFields) {
+                $fullRow = [
                     'type' => $row['type'] ?? '',
                     'booking_id' => $row['booking_id'] ?? '',
                     'name' => $row['name'] ?? '',
@@ -1201,11 +1274,27 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                     'check_out_date' => $row['check_out_date'] ?? '',
                     'total_persons' => $row['total_persons'] ?? ''
                 ];
+                
+                $extraData = $row['extra_fields'] ?? [];
+                if (is_string($extraData)) {
+                    $extraData = json_decode($extraData, true) ?? [];
+                }
+                foreach ($dynamicFields as $df) {
+                    $fullRow['extra_' . $df->name] = $extraData[$df->name] ?? '';
+                }
+                
+                $filteredRow = [];
+                foreach ($visibleColumnsKeys as $key) {
+                    if (isset($fullRow[$key])) {
+                        $filteredRow[$key] = $fullRow[$key];
+                    }
+                }
+                return $filteredRow;
             })->toArray();
 
             if ($format === 'excel') {
                 $filename = 'rejected-registrations-' . now()->format('Ymd-His') . '.xlsx';
-                $export = new RegistrationExport($rows);
+                $export = new RegistrationExport($rows, $exportHeadings);
                 
                 Log::info('Rejected Excel export completed', ['filename' => $filename, 'rows' => count($rows)]);
                 return Excel::download($export, $filename, \Maatwebsite\Excel\Excel::XLSX);
@@ -1372,9 +1461,44 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
 
             $data = $families->merge($groups);
 
+            $visibleColumnsKeys = $request->get('visible_columns');
+            $allColumnsMap = [
+                'type' => 'Type',
+                'booking_id' => 'Booking ID',
+                'name' => 'Name',
+                'father_name' => 'Father Name',
+                'phone' => 'Phone',
+                'aadhar_number' => 'Aadhar Number',
+                'age' => 'Age',
+                'mid' => 'MID',                
+                'city' => 'City',
+                'state' => 'State',
+                'aanchal' => 'Aanchal',
+                'travel_type' => 'Travel Type',
+                'check_in_date' => 'Check-in Date',
+                'check_out_date' => 'Check-out Date',
+                'total_persons' => 'Total Persons'
+            ];
+
+            $dynamicFields = \App\Models\DynamicField::where('status', true)->get();
+            foreach ($dynamicFields as $df) {
+                $allColumnsMap['extra_' . $df->name] = $df->label;
+            }
+
+            if (empty($visibleColumnsKeys) || !is_array($visibleColumnsKeys)) {
+                $visibleColumnsKeys = array_keys($allColumnsMap);
+            }
+
+            $exportHeadings = [];
+            foreach ($visibleColumnsKeys as $key) {
+                if (isset($allColumnsMap[$key])) {
+                    $exportHeadings[] = $allColumnsMap[$key];
+                }
+            }
+
             // Prepare flat rows for export - only required columns
-            $rows = $data->map(function($row){
-                return [
+            $rows = $data->map(function($row) use ($visibleColumnsKeys, $dynamicFields) {
+                $fullRow = [
                     'type' => $row['type'] ?? '',
                     'booking_id' => $row['booking_id'] ?? '',
                     'name' => $row['name'] ?? '',
@@ -1382,7 +1506,7 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                     'phone' => $row['phone'] ?? '',
                     'aadhar_number' => $row['aadhar_number'] ?? '',
                     'age' => $row['age'] ?? '',
-                    'mid' => $row['mid'] ?? '',
+                    'mid' => $row['mid'] ?? '',                    
                     'city' => $row['city'] ?? '',
                     'state' => $row['state'] ?? '',
                     'aanchal' => $row['aanchal'] ?? '',
@@ -1391,11 +1515,27 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                     'check_out_date' => $row['check_out_date'] ?? '',
                     'total_persons' => $row['total_persons'] ?? ''
                 ];
+                
+                $extraData = $row['extra_fields'] ?? [];
+                if (is_string($extraData)) {
+                    $extraData = json_decode($extraData, true) ?? [];
+                }
+                foreach ($dynamicFields as $df) {
+                    $fullRow['extra_' . $df->name] = $extraData[$df->name] ?? '';
+                }
+                
+                $filteredRow = [];
+                foreach ($visibleColumnsKeys as $key) {
+                    if (isset($fullRow[$key])) {
+                        $filteredRow[$key] = $fullRow[$key];
+                    }
+                }
+                return $filteredRow;
             })->toArray();
 
             if ($format === 'excel') {
                 $filename = 'checkout-registrations-' . now()->format('Ymd-His') . '.xlsx';
-                $export = new RegistrationExport($rows);
+                $export = new RegistrationExport($rows, $exportHeadings);
                 
                 Log::info('Checkout Excel export completed', ['filename' => $filename, 'rows' => count($rows)]);
                 return Excel::download($export, $filename, \Maatwebsite\Excel\Excel::XLSX);
@@ -1600,6 +1740,11 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                 'allotment_info' => 'Allotment Info'
             ];
 
+            $dynamicFields = \App\Models\DynamicField::where('status', true)->get();
+            foreach ($dynamicFields as $df) {
+                $allColumnsMap['extra_' . $df->name] = $df->label;
+            }
+
             if (empty($visibleColumnsKeys) || !is_array($visibleColumnsKeys)) {
                 $visibleColumnsKeys = array_keys($allColumnsMap);
             }
@@ -1611,7 +1756,7 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                 }
             }
 
-            $rows = $merged->map(function($row) use ($visibleColumnsKeys) {
+            $rows = $merged->map(function($row) use ($visibleColumnsKeys, $dynamicFields) {
                 $ensureUtf8 = function($value) {
                     if (!is_string($value)) return $value;
                     if (!mb_check_encoding($value, 'UTF-8')) {
@@ -1641,6 +1786,14 @@ $merged = $families->merge($groups)->sortByDesc(function($item){
                     'total_persons' => $ensureUtf8($row['total_persons'] ?? ''),
                     'allotment_info' => $ensureUtf8($row['allotment_info'] ?? '')
                 ];
+
+                $extraData = $row['extra_fields'] ?? [];
+                if (is_string($extraData)) {
+                    $extraData = json_decode($extraData, true) ?? [];
+                }
+                foreach ($dynamicFields as $df) {
+                    $fullRow['extra_' . $df->name] = $ensureUtf8($extraData[$df->name] ?? '');
+                }
 
                 $filteredRow = [];
                 foreach ($visibleColumnsKeys as $key) {

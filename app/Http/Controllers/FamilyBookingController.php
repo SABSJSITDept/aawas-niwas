@@ -408,7 +408,12 @@ public function index(Request $request)
 
     public function create()
     {
-        return view('family-booking.create');
+        $dynamicFields = \App\Models\DynamicField::where('form_type', 'family')
+                            ->where('status', true)
+                            ->orderBy('order', 'asc')
+                            ->orderBy('id', 'asc')
+                            ->get();
+        return view('family-booking.create', compact('dynamicFields'));
     }
 
     /**

@@ -517,11 +517,11 @@
         // Prefer server-provided available_after_all_bookings if present, else compute here using rooms.booked_total_all
         let availableVal = null;
 
-        if (rooms.available_after_all_bookings !== undefined && rooms.available_after_all_bookings !== null) {
-          availableVal = rooms.available_after_all_bookings;
+        if (rooms.available_after_current_bookings !== undefined && rooms.available_after_current_bookings !== null) {
+          availableVal = rooms.available_after_current_bookings;
         } else if (inventoryTotal !== null) {
-          // booked total from rooms API (booked_rooms sum) expected as rooms.booked_total_all
-          const bookedTotalFromRooms = (rooms.booked_total_all !== undefined && rooms.booked_total_all !== null) ? rooms.booked_total_all : null;
+          // booked current from rooms API
+          const bookedTotalFromRooms = (rooms.booked_current !== undefined && rooms.booked_current !== null) ? rooms.booked_current : null;
           if (bookedTotalFromRooms !== null) {
             availableVal = Math.max(0, Number(inventoryTotal) - Number(bookedTotalFromRooms));
           } else {
